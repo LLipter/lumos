@@ -62,3 +62,8 @@
 [吴恩达deeplearning图像风格转换](https://blog.csdn.net/qq_32865355/article/details/78885995)
 
 [基于深度学习的图像风格转换](https://blog.csdn.net/u013805360/article/details/73543229)
+
+[视频压缩算法的相关知识](https://www.cnblogs.com/mengfanrong/p/3827052.html?tdsourcetag=s_pctim_aiomsg)
+
+[转：MPEG-2压缩编码技术原理应用](https://www.cnblogs.com/xkfz007/articles/2615192.html?tdsourcetag=s_pctim_aiomsg)
+
