@@ -53,17 +53,15 @@
 
 # Reference
 
-[机器学习小项目(1)图片风格转移](https://www.jianshu.com/p/691a15196e81)
-
-[【啄米日常】5：keras示例程序解析（2）：图像风格转移](https://zhuanlan.zhihu.com/p/23479658)
-
-[运用深度学习进行艺术风格转换](http://www.imooc.com/article/79849)
-
-[吴恩达deeplearning图像风格转换](https://blog.csdn.net/qq_32865355/article/details/78885995)
-
-[基于深度学习的图像风格转换](https://blog.csdn.net/u013805360/article/details/73543229)
-
-[视频压缩算法的相关知识](https://www.cnblogs.com/mengfanrong/p/3827052.html?tdsourcetag=s_pctim_aiomsg)
-
-[转：MPEG-2压缩编码技术原理应用](https://www.cnblogs.com/xkfz007/articles/2615192.html?tdsourcetag=s_pctim_aiomsg)
+- 机器学习
+	1. [机器学习小项目(1)图片风格转移](https://www.jianshu.com/p/691a15196e81)
+	2. [【啄米日常】5：keras示例程序解析（2）：图像风格转移](https://zhuanlan.zhihu.com/p/23479658)
+	3. [运用深度学习进行艺术风格转换](http://www.imooc.com/article/79849)
+	4. [吴恩达deeplearning图像风格转换](https://blog.csdn.net/qq_32865355/article/details/78885995)
+	5. [基于深度学习的图像风格转换](https://blog.csdn.net/u013805360/article/details/73543229)
+- 数字图像计数
+	1. [视频压缩算法的相关知识](https://www.cnblogs.com/mengfanrong/p/3827052.html?tdsourcetag=s_pctim_aiomsg)
+	2. [转：MPEG-2压缩编码技术原理应用](https://www.cnblogs.com/xkfz007/articles/2615192.html?tdsourcetag=s_pctim_aiomsg)
+    3. [【官方双语】形象展示傅里叶变换](https://www.bilibili.com/video/av19141078?from=search&seid=11382747690788550091)
+	4. [【官方双语】欧拉公式与初等群论](https://www.bilibili.com/video/av11339177)
 
