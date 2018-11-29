@@ -58,14 +58,20 @@
   2. [【啄米日常】5：keras示例程序解析（2）：图像风格转移](https://zhuanlan.zhihu.com/p/23479658)
   3. [运用深度学习进行艺术风格转换](http://www.imooc.com/article/79849)
   4. [吴恩达deeplearning图像风格转换](https://blog.csdn.net/qq_32865355/article/details/78885995)
-  5. **[基于深度学习的图像风格转换](https://blog.csdn.net/u013805360/article/details/73543229)**！！！重点看这个！！！
+  5. **[基于深度学习的图像风格转换](https://blog.csdn.net/u013805360/article/details/73543229)**
+  6. [深度残差网络RESNET](https://blog.csdn.net/qq_31050167/article/details/79161077)
+  7. [图像的上采样（upsampling）与下采样（subsampled）](https://blog.csdn.net/stf1065716904/article/details/78450997)
+  8. [使用上采样加卷积的方法代替反卷积](https://blog.csdn.net/MOOLLLLLLLLLLL/article/details/80221613?utm_source=blogkpcl4)
+  9. [Deconvolution and Checkerboard Artifacts](https://www.jianshu.com/p/36ff39344de5)
+  10. **[Keras Documentation](https://keras.io/)**
+  11. [Texture Networks + Instance normalization: Feed-forward Synthesis of Textures and Stylized Images](https://github.com/DmitryUlyanov/texture_nets)
 - 数字图像技术
   1. [JPEG压缩编码算法原理](https://blog.csdn.net/u013752202/article/details/78551592)
   2. [视频压缩算法的相关知识](https://www.cnblogs.com/mengfanrong/p/3827052.html?tdsourcetag=s_pctim_aiomsg)
   3. [转：MPEG-2压缩编码技术原理应用](https://www.cnblogs.com/xkfz007/articles/2615192.html?tdsourcetag=s_pctim_aiomsg)
   4. [MPEG1压缩编码原理](http://blog.chinaunix.net/uid-31409925-id-5754943.html)
-  5. **[Video compression picture types](https://en.wikipedia.org/wiki/Video_compression_picture_types)**！！！重点看这个！！！
-  6. **[how prediction is calulated](https://softwareengineering.stackexchange.com/questions/165872/what-are-mpeg-i-p-and-b-frames)**！！！重点看着这个！！！
+  5. **[Video compression picture types](https://en.wikipedia.org/wiki/Video_compression_picture_types)**
+  6. **[how prediction is calulated](https://softwareengineering.stackexchange.com/questions/165872/what-are-mpeg-i-p-and-b-frames)**
     7. [【官方双语】形象展示傅里叶变换](https://www.bilibili.com/video/av19141078?from=search&seid=11382747690788550091)
   8. [【官方双语】欧拉公式与初等群论](https://www.bilibili.com/video/av11339177)
 
