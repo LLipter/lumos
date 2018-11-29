@@ -66,8 +66,9 @@
   10. [Deconvolution and Checkerboard Artifacts (cn)](https://www.jianshu.com/p/36ff39344de5)
   11. [Deconvolution and Checkerboard Artifacts (en)](https://distill.pub/2016/deconv-checkerboard/)
   12. [VGG16学习笔记](https://blog.csdn.net/dta0502/article/details/79654931)
-  13. **[Keras Documentation](https://keras.io/)**
-  14. [Texture Networks + Instance normalization: Feed-forward Synthesis of Textures and Stylized Images](https://github.com/DmitryUlyanov/texture_nets)
+  13. [keras官方给的风格转移示例程序](https://github.com/keras-team/keras/blob/master/examples/neural_style_transfer.py)
+  14. **[Keras Documentation](https://keras.io/)**
+  15. [Texture Networks + Instance normalization: Feed-forward Synthesis of Textures and Stylized Images](https://github.com/DmitryUlyanov/texture_nets)
 - 数字图像技术
   1. [JPEG压缩编码算法原理](https://blog.csdn.net/u013752202/article/details/78551592)
   2. [视频压缩算法的相关知识](https://www.cnblogs.com/mengfanrong/p/3827052.html?tdsourcetag=s_pctim_aiomsg)
