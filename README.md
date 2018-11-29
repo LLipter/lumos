@@ -59,12 +59,15 @@
   3. [运用深度学习进行艺术风格转换](http://www.imooc.com/article/79849)
   4. [吴恩达deeplearning图像风格转换](https://blog.csdn.net/qq_32865355/article/details/78885995)
   5. **[基于深度学习的图像风格转换](https://blog.csdn.net/u013805360/article/details/73543229)**
-  6. [深度残差网络RESNET](https://blog.csdn.net/qq_31050167/article/details/79161077)
-  7. [图像的上采样（upsampling）与下采样（subsampled）](https://blog.csdn.net/stf1065716904/article/details/78450997)
-  8. [使用上采样加卷积的方法代替反卷积](https://blog.csdn.net/MOOLLLLLLLLLLL/article/details/80221613?utm_source=blogkpcl4)
-  9. [Deconvolution and Checkerboard Artifacts](https://www.jianshu.com/p/36ff39344de5)
-  10. **[Keras Documentation](https://keras.io/)**
-  11. [Texture Networks + Instance normalization: Feed-forward Synthesis of Textures and Stylized Images](https://github.com/DmitryUlyanov/texture_nets)
+  6. [Perceptual Losses for Real-Time Style Transfer and Super-Resolution](https://arxiv.org/pdf/1603.08155.pdf)
+  7. [深度残差网络RESNET](https://blog.csdn.net/qq_31050167/article/details/79161077)
+  8. [图像的上采样（upsampling）与下采样（subsampled）](https://blog.csdn.net/stf1065716904/article/details/78450997)
+  9. [使用上采样加卷积的方法代替反卷积](https://blog.csdn.net/MOOLLLLLLLLLLL/article/details/80221613?utm_source=blogkpcl4)
+  10. [Deconvolution and Checkerboard Artifacts (cn)](https://www.jianshu.com/p/36ff39344de5)
+  11. [Deconvolution and Checkerboard Artifacts (en)](https://distill.pub/2016/deconv-checkerboard/)
+  12. [VGG16学习笔记](https://blog.csdn.net/dta0502/article/details/79654931)
+  13. **[Keras Documentation](https://keras.io/)**
+  14. [Texture Networks + Instance normalization: Feed-forward Synthesis of Textures and Stylized Images](https://github.com/DmitryUlyanov/texture_nets)
 - 数字图像技术
   1. [JPEG压缩编码算法原理](https://blog.csdn.net/u013752202/article/details/78551592)
   2. [视频压缩算法的相关知识](https://www.cnblogs.com/mengfanrong/p/3827052.html?tdsourcetag=s_pctim_aiomsg)
