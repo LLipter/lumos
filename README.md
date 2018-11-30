@@ -52,22 +52,21 @@
 # Reference
 
 - 机器学习
-  1. [机器学习小项目(1)图片风格转移](https://www.jianshu.com/p/691a15196e81)
-  2. [【啄米日常】5：keras示例程序解析（2）：图像风格转移](https://zhuanlan.zhihu.com/p/23479658)
-  3. [运用深度学习进行艺术风格转换](http://www.imooc.com/article/79849)
-  4. [吴恩达deeplearning图像风格转换](https://blog.csdn.net/qq_32865355/article/details/78885995)
-  5. **[基于深度学习的图像风格转换](https://blog.csdn.net/u013805360/article/details/73543229)**
-  6. [Perceptual Losses for Real-Time Style Transfer and Super-Resolution](https://arxiv.org/pdf/1603.08155.pdf)
-  7. [深度残差网络RESNET](https://blog.csdn.net/qq_31050167/article/details/79161077)
-  8. [图像的上采样（upsampling）与下采样（subsampled）](https://blog.csdn.net/stf1065716904/article/details/78450997)
-  9. [使用上采样加卷积的方法代替反卷积](https://blog.csdn.net/MOOLLLLLLLLLLL/article/details/80221613?utm_source=blogkpcl4)
-  10. [Deconvolution and Checkerboard Artifacts (cn)](https://www.jianshu.com/p/36ff39344de5)
-  11. [Deconvolution and Checkerboard Artifacts (en)](https://distill.pub/2016/deconv-checkerboard/)
-  12. [VGG16学习笔记](https://blog.csdn.net/dta0502/article/details/79654931)
-  13. [Total variation denoising](https://en.wikipedia.org/wiki/Total_variation_denoising)
-  14. **[keras官方给的风格转移示例程序](https://github.com/keras-team/keras/blob/master/examples/neural_style_transfer.py)**
-  15. **[Keras Documentation](https://keras.io/)**
-  16. [Texture Networks + Instance normalization: Feed-forward Synthesis of Textures and Stylized Images](https://github.com/DmitryUlyanov/texture_nets)
+  1. [A Neural Algorithm of Artistic Style](https://arxiv.org/abs/1508.06576)(2015.8.26)
+  2. [Perceptual Losses for Real-Time Style Transfer and Super-Resolution](https://arxiv.org/abs/1603.08155)(2016.3.27)
+  3. [Instance Normalization: The Missing Ingredient for Fast Stylization](https://arxiv.org/abs/1607.08022)(2016.7.27)
+    4. **[基于深度学习的图像风格转换](https://blog.csdn.net/u013805360/article/details/73543229)**（文献2的中文解读）
+    5. **[keras官方给的风格转移示例程序](https://github.com/keras-team/keras/blob/master/examples/neural_style_transfer.py)**（基于文献1的实现）
+    7. **[【啄米日常】5：keras示例程序解析（2）：图像风格转移](https://zhuanlan.zhihu.com/p/23479658)**（文献5的代码中文解读）
+  6. [Keras Documentation](https://keras.io/)
+  8. [深度残差网络RESNET](https://blog.csdn.net/qq_31050167/article/details/79161077)
+  9. [图像的上采样（upsampling）与下采样（subsampled）](https://blog.csdn.net/stf1065716904/article/details/78450997)
+  10. [使用上采样加卷积的方法代替反卷积](https://blog.csdn.net/MOOLLLLLLLLLLL/article/details/80221613?utm_source=blogkpcl4)
+  11. [Deconvolution and Checkerboard Artifacts (cn)](https://www.jianshu.com/p/36ff39344de5)
+  12. [Deconvolution and Checkerboard Artifacts (en)](https://distill.pub/2016/deconv-checkerboard/)
+  13. [VGG16学习笔记](https://blog.csdn.net/dta0502/article/details/79654931)
+  14. [Total variation denoising](https://en.wikipedia.org/wiki/Total_variation_denoising)
+  15. [Texture Networks + Instance normalization: Feed-forward Synthesis of Textures and Stylized Images](https://github.com/DmitryUlyanov/texture_nets)
 - 数字图像技术
   1. [JPEG压缩编码算法原理](https://blog.csdn.net/u013752202/article/details/78551592)
   2. [视频压缩算法的相关知识](https://www.cnblogs.com/mengfanrong/p/3827052.html?tdsourcetag=s_pctim_aiomsg)
