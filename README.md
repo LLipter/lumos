@@ -10,8 +10,6 @@
 
 这种算法接受两个输入图片，一张作为风格模板，一张作为原图。对原图进行修改，输出一张参照风格模板修改过后的图片。具体网络是怎么实现的，结构是怎么样的我都不清楚，没有仔细了解过，这部分需要大家自己学习一下，可以搜索关键词“深度学习”、“机器学习”、“风格转换”等等。 好像听说是运用到了一种叫做GAN（对抗生成网络）的结构，可能是GAN的一种变体吧。
 
-[机器学习小项目(1)图片风格转移](https://www.jianshu.com/p/691a15196e81)
-
 拿到可以使用的模型之后，一个最直观的思路就是把视频分成一帧一帧的图片，然后分别丢到模型里面去得到转化后的图片，然后再拼起来得到修改后的视频。
 
 但是这样显然效率太低，考虑到一个长度为5分钟的视频，以每秒20帧计算，那么就会有6000张图片需要进行处理。这类模型的运算效率现在我不清楚，但猜测不会很快，这样的话转换视频所需的时间就会长到无法接受。我目前想到了一种优化思路，那就是借鉴视频压缩的技术。因为相邻两帧视频之间会有很大的相似度，所以完全可以不把每一帧图片都扔到模型中训练，而是比如说选取1000帧（等距分布在整个视频中）扔到模型中转化，由这1000转化后的图片推测剩下的5000帧，形成连贯的视频。我记得上数字图像处理课的时候好像讲过相似的东西。实际上视频就会利用这样的手段进行压缩。可能会用到一个叫残差的概念。
@@ -66,9 +64,10 @@
   10. [Deconvolution and Checkerboard Artifacts (cn)](https://www.jianshu.com/p/36ff39344de5)
   11. [Deconvolution and Checkerboard Artifacts (en)](https://distill.pub/2016/deconv-checkerboard/)
   12. [VGG16学习笔记](https://blog.csdn.net/dta0502/article/details/79654931)
-  13. [keras官方给的风格转移示例程序](https://github.com/keras-team/keras/blob/master/examples/neural_style_transfer.py)
-  14. **[Keras Documentation](https://keras.io/)**
-  15. [Texture Networks + Instance normalization: Feed-forward Synthesis of Textures and Stylized Images](https://github.com/DmitryUlyanov/texture_nets)
+  13. [Total variation denoising](https://en.wikipedia.org/wiki/Total_variation_denoising)
+  14. **[keras官方给的风格转移示例程序](https://github.com/keras-team/keras/blob/master/examples/neural_style_transfer.py)**
+  15. **[Keras Documentation](https://keras.io/)**
+  16. [Texture Networks + Instance normalization: Feed-forward Synthesis of Textures and Stylized Images](https://github.com/DmitryUlyanov/texture_nets)
 - 数字图像技术
   1. [JPEG压缩编码算法原理](https://blog.csdn.net/u013752202/article/details/78551592)
   2. [视频压缩算法的相关知识](https://www.cnblogs.com/mengfanrong/p/3827052.html?tdsourcetag=s_pctim_aiomsg)
