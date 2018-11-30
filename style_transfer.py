@@ -3,7 +3,7 @@ import numpy as np
 
 from keras.applications import vgg19
 from keras import backend as K
-from keras.layers import Input, Conv2D, ReLU, Add
+from keras.layers import Input, Conv2D, Add, Conv2DTranspose, Activation
 from keras.models import Model
 from keras.utils import plot_model
 from keras_contrib.layers import InstanceNormalization
@@ -36,7 +36,7 @@ def deprocess_image(x):
     return x
 
 
-def downSampling(x, filters, kernel_size, strides, padding="same"):
+def downSampling(x, filters, kernel_size, strides, padding="same", activation="relu"):
     conv = Conv2D(filters=filters,
                   kernel_size=kernel_size,
                   strides=strides,
@@ -46,8 +46,8 @@ def downSampling(x, filters, kernel_size, strides, padding="same"):
         instance_normalized = InstanceNormalization(axis=1)(conv)
     else:
         instance_normalized = InstanceNormalization(axis=3)(conv)
-    relu = ReLU()(instance_normalized)
-    return relu
+    activated = Activation(activation)(instance_normalized)
+    return activated
 
 def residul(x):
     conv1 = Conv2D(filters=128,
@@ -59,7 +59,7 @@ def residul(x):
         instance_normalized1 = InstanceNormalization(axis=1)(conv1)
     else:
         instance_normalized1 = InstanceNormalization(axis=3)(conv1)
-    relu = ReLU()(instance_normalized1)
+    relu = Activation("relu")(instance_normalized1)
     conv2 = Conv2D(filters=128,
                    kernel_size=3,
                    strides=1,
@@ -70,6 +70,19 @@ def residul(x):
     else:
         instance_normalized2 = InstanceNormalization(axis=3)(conv2)
     return Add()([instance_normalized2, x])
+
+def upSampling(x, filters, kernel_size, strides, padding="same", activation="relu"):
+    deconv = Conv2DTranspose(filters=filters,
+                             kernel_size=kernel_size,
+                             strides=strides,
+                             padding=padding,
+                             data_format=K.image_data_format())(x)
+    if K.image_data_format() == 'channels_first':
+        instance_normalized = InstanceNormalization(axis=1)(deconv)
+    else:
+        instance_normalized = InstanceNormalization(axis=3)(deconv)
+    activated = Activation(activation)(instance_normalized)
+    return activated
 
 
 def transform_model():
@@ -88,7 +101,11 @@ def transform_model():
     resi4 = residul(resi3)
     resi5 = residul(resi4)
 
-    transformNet = Model(inputs=input, outputs=resi5)
+    deconv1 = upSampling(resi5, 64, 3, 2)
+    deconv2 = upSampling(deconv1, 32, 3, 2)
+    deconv3 = upSampling(deconv2, 3, 9, 1)
+
+    transformNet = Model(inputs=input, outputs=deconv3)
     plot_model(transformNet, to_file="img/model/transform.png", show_shapes=True)
     return transformNet
 
