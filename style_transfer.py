@@ -3,13 +3,14 @@ import numpy as np
 
 from keras.applications import vgg19
 from keras import backend as K
-from keras.layers import Input, Conv2D, Add, Conv2DTranspose, Activation
+from keras.layers import Input, Conv2D, Add, Conv2DTranspose, Activation, Lambda
 from keras.models import Model
 from keras.utils import plot_model
 from keras_contrib.layers import InstanceNormalization
 
 img_nrows = 256
 img_ncols = 256
+
 
 # util function to open, resize and format pictures into appropriate tensors
 def preprocess_image(image_path):
@@ -18,6 +19,7 @@ def preprocess_image(image_path):
     img = np.expand_dims(img, axis=0)
     img = vgg19.preprocess_input(img)
     return img
+
 
 # util function to convert a tensor into a valid image
 def deprocess_image(x):
@@ -49,6 +51,7 @@ def downSampling(x, filters, kernel_size, strides, padding="same", activation="r
     activated = Activation(activation)(instance_normalized)
     return activated
 
+
 def residul(x):
     conv1 = Conv2D(filters=128,
                    kernel_size=3,
@@ -70,6 +73,7 @@ def residul(x):
     else:
         instance_normalized2 = InstanceNormalization(axis=3)(conv2)
     return Add()([instance_normalized2, x])
+
 
 def upSampling(x, filters, kernel_size, strides, padding="same", activation="relu"):
     deconv = Conv2DTranspose(filters=filters,
@@ -105,11 +109,11 @@ def transform_model():
     deconv2 = upSampling(deconv1, 32, 3, 2)
     deconv3 = upSampling(deconv2, 3, 9, 1)
 
-    transformNet = Model(inputs=input, outputs=deconv3)
-    plot_model(transformNet, to_file="img/model/transform.png", show_shapes=True)
+    output = Lambda(lambda x: x * 128)(deconv3)
+
+    transformNet = Model(inputs=input, outputs=output)
+    plot_model(transformNet, to_file="img/model/transformNet.png", show_shapes=True)
     return transformNet
-
-
 
 
 if __name__ == "__main__":
@@ -127,6 +131,3 @@ if __name__ == "__main__":
 
     transformNet = transform_model()
     print(K.image_data_format())
-
-
-
