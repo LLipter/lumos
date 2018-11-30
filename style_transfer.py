@@ -37,7 +37,7 @@ def deprocess_image(x):
 
 if __name__ == "__main__":
     print("hello world")
-    # img = preprocess_image("data/style/candy.jpg")
+    # img = preprocess_image("img/style/candy.jpg")
     # print(img)
     # print(img.shape)
     input_tensor = K.placeholder((1, img_nrows, img_ncols, 3))
