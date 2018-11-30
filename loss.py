@@ -31,10 +31,10 @@ def style_loss(style, combination):
 # designed to maintain the "content" of the
 # base image in the generated image
 def content_loss(base, combination):
-    assert K.ndim(base) == 3
+    assert K.ndim(base) == 4
     assert base.shape == combination.shape
-    size = base.shape[0] * base.shape[1] * base.shape[2]
-    return K.sum(K.square(combination - base)) / size
+    size = base.shape[1] * base.shape[2] * base.shape[3]
+    return K.sum(K.square(combination - base), axis=0) / size
 
 
 # # the 3rd loss function, total variation loss,

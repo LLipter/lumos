@@ -5,8 +5,8 @@ from keras.utils import plot_model
 from keras.applications import vgg19
 from keras_contrib.layers import InstanceNormalization
 
-from conf import img_nrows, img_ncols, content_weight, stype_weight
-from loss import content_loss
+from conf import img_nrows, img_ncols, content_weight, style_weight, style_feature_layers, content_feature_layers
+from loss import content_loss, style_loss
 
 
 def down_sampling(x, filters, kernel_size, strides, padding="same", activation="relu"):
@@ -95,9 +95,20 @@ def loss_net():
         input_shape = (img_nrows, img_ncols, 3)
 
     # build the VGG19 network with pre-trained ImageNet weights loaded
-    model = vgg19.VGG19(input_shape=input_shape, weights='imagenet', include_top=False)
-    plot_model(model, to_file="img/model/loss_net.png", show_shapes=True)
-    return model
+    input_tensor = Input(shape=input_shape)
+    vgg19_model = vgg19.VGG19(input_tensor=input_tensor, weights='imagenet', include_top=False)
+    plot_model(vgg19_model, to_file="img/model/vgg19.png", show_shapes=True)
+
+    # get the symbolic outputs of each "key" layer (we gave them unique names).
+    outputs_dict = dict([(layer.name, layer.output) for layer in vgg19_model.layers])
+
+    output_tensors = []
+    for layer_name in content_feature_layers:
+        output_tensors.append(outputs_dict[layer_name])
+    for layer_name in style_feature_layers:
+        output_tensors.append(outputs_dict[layer_name])
+
+    return Model(inputs=input_tensor, outputs=output_tensors)
 
 
 def overall_net():
@@ -110,40 +121,32 @@ def overall_net():
     else:
         base_image = Input(shape=(img_nrows, img_ncols, 3))
         style_image = Input(shape=(img_nrows, img_ncols, 3))
-
     transformed_image = trans_net(base_image)
+    print(trans_net.input_shape)
+    print(trans_net.output_shape)
+    print(base_image.shape)
+    print(transformed_image.shape)
 
-    output_tensor = los_net(base_image)
-    base_loss_net = Model(inputs=base_image, outputs=output_tensor)
-    output_tensor = los_net(style_image)
-    style_loss_net = Model(inputs=style_image, outputs=output_tensor)
-    output_tensor = los_net(transformed_image)
-    transformed_loss_net = Model(inputs=transformed_image, outputs=output_tensor)
+    base_features = los_net(base_image)
+    style_features = los_net(style_image)
+    transformed_features = los_net(transformed_image)
 
-    # get the symbolic outputs of each "key" layer (we gave them unique names).
-    base_outputs_dict = dict([(layer.name, layer.output) for layer in base_loss_net.layers])
-    style_outputs_dict = dict([(layer.name, layer.output) for layer in style_loss_net.layers])
-    transformed_outputs_dict = dict([(layer.name, layer.output) for layer in transformed_loss_net.layers])
+    for i in range(len(base_features)):
+        print(base_features[i].shape, style_features[i].shape, transformed_features[i].shape)
 
-    # combine these loss functions into a single scalar
+
     loss = K.variable(0.0)
     # content loss
-    content_feature_layers = ['block5_conv2']
-    for layer_name in content_feature_layers:
-        base_features = base_outputs_dict[layer_name]
-        transformed_features = transformed_outputs_dict[layer_name]
-        loss += content_weight * content_loss(base_features, transformed_features)
+    for i in range(len(content_feature_layers)):
+        base = base_features[i]
+        transformed = transformed_features[i]
+        print(base.shape)
+        print(transformed.shape)
+        loss += content_weight * content_loss(base, transformed)
+    # style loss
+    for i in range(len(style_feature_layers)):
+        style = style_features[i + len(content_feature_layers)]
+        transformed = transformed_features[i + len(content_feature_layers)]
+        loss += style_weight * style_loss(style, transformed)
 
-    stype_feature_layers = ['block1_conv1', 'block2_conv1',
-                            'block3_conv1', 'block4_conv1',
-                            'block5_conv1']
-    for key in base_outputs_dict.keys():
-        print(key)
-    # for layer_name in stype_feature_layers:
-    #     layer_features = outputs_dict[layer_name]
-    #     style_reference_features = layer_features[1, :, :, :]
-    #     combination_features = layer_features[2, :, :, :]
-    #     sl = style_loss(style_reference_features, combination_features)
-    #     loss += (style_weight / len(stype_feature_layers)) * sl
-    # loss += total_variation_weight * total_variation_loss(combination_image)
 
