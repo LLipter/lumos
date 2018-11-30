@@ -37,17 +37,20 @@ def deprocess_image(x):
 
 
 def downSampling(x, filters, kernel_size, strides, padding):
-    conv1 = Conv2D(filters=filters,
-                   kernel_size=kernel_size,
-                   strides=strides,
-                   padding=padding,
-                   data_format=K.image_data_format())(x)
+    conv = Conv2D(filters=filters,
+                  kernel_size=kernel_size,
+                  strides=strides,
+                  padding=padding,
+                  data_format=K.image_data_format())(x)
     if K.image_data_format() == 'channels_first':
-        instance_normalized = InstanceNormalization(axis=1)(conv1)
+        instance_normalized = InstanceNormalization(axis=1)(conv)
     else:
-        instance_normalized = InstanceNormalization(axis=3)(conv1)
+        instance_normalized = InstanceNormalization(axis=3)(conv)
     relu = ReLU()(instance_normalized)
     return relu
+
+def residul(x, filters, kernel, strides):
+    pass
 
 
 def transform_model():
@@ -57,8 +60,8 @@ def transform_model():
         input = Input(shape=(img_nrows, img_ncols, 3))
 
     conv1 = downSampling(input, 32, 9, 1, "same")
-    conv2 = downSampling(conv1, 64, 3, 2, "valid")
-    conv3 = downSampling(conv2, 128, 3, 2, "valid")
+    conv2 = downSampling(conv1, 64, 3, 2, "same")
+    conv3 = downSampling(conv2, 128, 3, 2, "same")
 
     transformNet = Model(inputs=input, outputs=conv3)
     plot_model(transformNet, to_file="img/model/transform.png", show_shapes=True)
