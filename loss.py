@@ -1,5 +1,6 @@
 from keras import backend as K
 
+from conf import img_nrows, img_ncols
 
 # the gram matrix of an image tensor (feature-wise outer product)
 def gram_matrix(x):
@@ -34,3 +35,24 @@ def content_loss(base, combination):
     assert base.shape == combination.shape
     size = base.shape[0] * base.shape[1] * base.shape[2]
     return K.sum(K.square(combination - base)) / size
+
+
+# # the 3rd loss function, total variation loss,
+# # designed to keep the generated image locally coherent
+# def total_variation_loss(x):
+#     assert K.ndim(x) == 4
+#     if K.image_data_format() == 'channels_first':
+#         a = K.square(
+#             x[:, :, :img_nrows - 1, :img_ncols - 1] - x[:, :, 1:, :img_ncols - 1])
+#         b = K.square(
+#             x[:, :, :img_nrows - 1, :img_ncols - 1] - x[:, :, :img_nrows - 1, 1:])
+#     else:
+#         a = K.square(
+#             x[:, :img_nrows - 1, :img_ncols - 1, :] - x[:, 1:, :img_ncols - 1, :])
+#         b = K.square(
+#             x[:, :img_nrows - 1, :img_ncols - 1, :] - x[:, :img_nrows - 1, 1:, :])
+#     return K.sum(K.pow(a + b, 1.25))
+#
+#
+#
+#

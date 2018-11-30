@@ -1,4 +1,4 @@
-from model import transform_model
+from model import transform_net, loss_net, overall_net
 
 if __name__ == "__main__":
     print("hello world")
@@ -13,5 +13,5 @@ if __name__ == "__main__":
     # for key in outputs_dict.keys():
     #     print(key)
 
-    transformNet = transform_model()
-    
+    model = overall_net()
+    print(model)
