@@ -136,7 +136,7 @@ def overall_net():
                                   style_image,
                                   transformed_image], axis=0)
     features = los_net(input_tensor)
-    
+
 
     # base_features = los_net(base_image)
     # style_features = los_net(style_image)
