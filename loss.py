@@ -1,6 +1,7 @@
 from keras import backend as K
 
-from conf import content_weight, style_weight, style_feature_layers, content_feature_layers
+from conf import content_weight, style_weight, tv_weight, style_feature_layers, content_feature_layers
+
 
 # the gram matrix of an image tensor (feature-wise outer product)
 def gram_matrix(x):
@@ -53,6 +54,7 @@ def total_variation_loss(x):
             x[:x.shape[0] - 1, :x.shape[1] - 1, :] - x[:x.shape[0] - 1, 1:, :])
     return K.sum(K.sqrt(a + b))
 
+
 def loss_function(y_pred, y_true):
     loss = K.variable(0.0)
     # content loss
@@ -66,5 +68,4 @@ def loss_function(y_pred, y_true):
         transformed = y_pred[i + len(content_feature_layers)][2, :, :, :]
         loss.assign_add(style_weight * style_loss(style, transformed))
     # total variation loss
-    loss.assign_add(total_variation_loss(y_pred[-1]))
-
+    loss.assign_add(tv_weight * total_variation_loss(y_pred[-1]))
