@@ -1,16 +1,16 @@
 from keras import backend as K
 
-from conf import img_nrows, img_ncols
 
 # the gram matrix of an image tensor (feature-wise outer product)
 def gram_matrix(x):
-    assert K.ndim(x) == 3
-    size = x.shape[0] * x.shape[1] * x.shape[2]
+    size = int(x.shape[1] * x.shape[2] * x.shape[3])
     if K.image_data_format() == 'channels_first':
-        features = K.batch_flatten(x)
+        shape = (-1, x.shape[1], x.shape[2] * x.shape[3])
+        features = K.reshape(x, shape)
     else:
-        features = K.batch_flatten(K.permute_dimensions(x, (2, 0, 1)))
-    gram = K.dot(features, K.transpose(features)) / size
+        shape = (-1, x.shape[3], x.shape[1] * x.shape[2])
+        features = K.reshape(K.permute_dimensions(x, (0, 3, 1, 2)), shape)
+    gram = K.batch_dot(features, K.permute_dimensions(features, (0, 2, 1))) / size
     return gram
 
 
@@ -20,8 +20,6 @@ def gram_matrix(x):
 # feature maps from the style reference image
 # and from the generated image
 def style_loss(style, combination):
-    assert K.ndim(style) == 3
-    assert style.shape == combination.shape
     S = gram_matrix(style)
     C = gram_matrix(combination)
     return K.sum(K.square(S - C))
@@ -31,11 +29,8 @@ def style_loss(style, combination):
 # designed to maintain the "content" of the
 # base image in the generated image
 def content_loss(base, combination):
-    assert K.ndim(base) == 4
-    assert base.shape == combination.shape
-    size = base.shape[1] * base.shape[2] * base.shape[3]
-    return K.sum(K.square(combination - base), axis=0) / size
-
+    size = int(base.shape[1] * base.shape[2] * base.shape[3])
+    return K.sum(K.square(combination - base), axis=[1, 2, 3]) / size
 
 # # the 3rd loss function, total variation loss,
 # # designed to keep the generated image locally coherent

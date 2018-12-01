@@ -4,6 +4,7 @@ from keras.models import Model
 from keras.utils import plot_model
 from keras.applications import vgg19
 from keras_contrib.layers import InstanceNormalization
+import numpy as np
 
 from conf import img_nrows, img_ncols, content_weight, style_weight, style_feature_layers, content_feature_layers
 from loss import content_loss, style_loss
@@ -99,6 +100,10 @@ def loss_net():
     vgg19_model = vgg19.VGG19(input_tensor=input_tensor, weights='imagenet', include_top=False)
     plot_model(vgg19_model, to_file="img/model/vgg19.png", show_shapes=True)
 
+    # freeze weights
+    for layer in vgg19_model.layers:
+        layer.trainable = False
+
     # get the symbolic outputs of each "key" layer (we gave them unique names).
     outputs_dict = dict([(layer.name, layer.output) for layer in vgg19_model.layers])
 
@@ -122,31 +127,32 @@ def overall_net():
         base_image = Input(shape=(img_nrows, img_ncols, 3))
         style_image = Input(shape=(img_nrows, img_ncols, 3))
     transformed_image = trans_net(base_image)
-    print(trans_net.input_shape)
-    print(trans_net.output_shape)
-    print(base_image.shape)
-    print(transformed_image.shape)
+    # if K.image_data_format() == 'channels_first':
+    #     transformed_image = K.reshape(transformed_image, (-1, 3, img_nrows, img_ncols))
+    # else:
+    #     transformed_image = K.reshape(transformed_image, (-1, img_nrows, img_ncols, 3))
 
-    base_features = los_net(base_image)
-    style_features = los_net(style_image)
-    transformed_features = los_net(transformed_image)
+    input_tensor = K.concatenate([base_image,
+                                  style_image,
+                                  transformed_image], axis=0)
+    features = los_net(input_tensor)
+    
 
-    for i in range(len(base_features)):
-        print(base_features[i].shape, style_features[i].shape, transformed_features[i].shape)
+    # base_features = los_net(base_image)
+    # style_features = los_net(style_image)
+    # transformed_features = los_net(transformed_image)
 
-
-    loss = K.variable(0.0)
-    # content loss
-    for i in range(len(content_feature_layers)):
-        base = base_features[i]
-        transformed = transformed_features[i]
-        print(base.shape)
-        print(transformed.shape)
-        loss += content_weight * content_loss(base, transformed)
-    # style loss
-    for i in range(len(style_feature_layers)):
-        style = style_features[i + len(content_feature_layers)]
-        transformed = transformed_features[i + len(content_feature_layers)]
-        loss += style_weight * style_loss(style, transformed)
-
-
+    # loss = K.variable(0.0)
+    # # content loss
+    # for i in range(len(content_feature_layers)):
+    #     base = base_features[i]
+    #     transformed = transformed_features[i]
+    #     x = content_weight * content_loss(base, transformed)
+    #     print(x.shape)
+    #     print(loss.shape)
+    #     loss.assign_add()
+    # # style loss
+    # for i in range(len(style_feature_layers)):
+    #     style = style_features[i + len(content_feature_layers)]
+    #     transformed = transformed_features[i + len(content_feature_layers)]
+    #     loss.assign_add(style_weight * style_loss(style, transformed))
