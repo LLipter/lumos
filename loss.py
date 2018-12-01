@@ -1,10 +1,11 @@
 from keras import backend as K
 
+from conf import content_weight, style_weight, style_feature_layers, content_feature_layers
 
 # the gram matrix of an image tensor (feature-wise outer product)
 def gram_matrix(x):
     assert K.ndim(x) == 3
-    size = x.shape[0] * x.shape[1] * x.shape[2]
+    size = int(x.shape[0] * x.shape[1] * x.shape[2])
     if K.image_data_format() == 'channels_first':
         features = K.batch_flatten(x)
     else:
@@ -32,7 +33,7 @@ def style_loss(style, combination):
 def content_loss(base, combination):
     assert K.ndim(base) == 3
     assert base.shape == combination.shape
-    size = base.shape[0] * base.shape[1] * base.shape[2]
+    size = int(base.shape[0] * base.shape[1] * base.shape[2])
     return K.sum(K.square(combination - base)) / size
 
 
@@ -47,7 +48,23 @@ def total_variation_loss(x):
             x[:, :x.shape[1] - 1, :x.shape[2] - 1] - x[:, :, :x.shape[1] - 1, 1:])
     else:
         a = K.square(
-            x[:x.shape[0] - 1, :x.shape[1] - 1, :] - x[:, 1:, :x.shape[1] - 1, :])
+            x[:x.shape[0] - 1, :x.shape[1] - 1, :] - x[1:, :x.shape[1] - 1, :])
         b = K.square(
-            x[:x.shape[0] - 1, :x.shape[1] - 1, :] - x[:, :x.shape[0] - 1, 1:, :])
+            x[:x.shape[0] - 1, :x.shape[1] - 1, :] - x[:x.shape[0] - 1, 1:, :])
     return K.sum(K.sqrt(a + b))
+
+def loss_function(y_pred, y_true):
+    loss = K.variable(0.0)
+    # content loss
+    for i in range(len(content_feature_layers)):
+        base = y_pred[i][0, :, :, :]
+        transformed = y_pred[i][2, :, :, :]
+        loss.assign_add(content_weight * content_loss(base, transformed))
+    # style loss
+    for i in range(len(style_feature_layers)):
+        style = y_pred[i + len(content_feature_layers)][1, :, :, :]
+        transformed = y_pred[i + len(content_feature_layers)][2, :, :, :]
+        loss.assign_add(style_weight * style_loss(style, transformed))
+    # total variation loss
+    loss.assign_add(total_variation_loss(y_pred[-1]))
+

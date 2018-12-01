@@ -14,4 +14,4 @@ if __name__ == "__main__":
     #     print(key)
 
     model = overall_net()
-    print(model)
+    # print(model)

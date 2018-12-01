@@ -1,13 +1,11 @@
 from keras import backend as K
-from keras.layers import Input, Conv2D, Add, Conv2DTranspose, Activation, Lambda
+from keras.layers import Input, Conv2D, Add, Conv2DTranspose, Activation, Lambda, Concatenate
 from keras.models import Model
 from keras.utils import plot_model
 from keras.applications import vgg19
 from keras_contrib.layers import InstanceNormalization
-import numpy as np
 
-from conf import img_nrows, img_ncols, content_weight, style_weight, style_feature_layers, content_feature_layers
-from loss import content_loss, style_loss
+from conf import img_nrows, img_ncols, style_feature_layers, content_feature_layers
 
 
 def down_sampling(x, filters, kernel_size, strides, padding="same", activation="relu"):
@@ -83,9 +81,9 @@ def transform_net():
 
     output = Lambda(lambda x: x * 128)(deconv3)
 
-    model = Model(inputs=input_tensor, outputs=output)
-    plot_model(model, to_file="img/model/transform_net.png", show_shapes=True)
-    return model
+    transform_model = Model(inputs=input_tensor, outputs=output)
+    plot_model(transform_model, to_file="img/model/transform_net.png", show_shapes=True)
+    return transform_model
 
 
 def loss_net():
@@ -112,7 +110,6 @@ def loss_net():
         output_tensors.append(outputs_dict[layer_name])
     for layer_name in style_feature_layers:
         output_tensors.append(outputs_dict[layer_name])
-
     return Model(inputs=input_tensor, outputs=output_tensors)
 
 
@@ -127,32 +124,13 @@ def overall_net():
         base_image = Input(shape=(img_nrows, img_ncols, 3))
         style_image = Input(shape=(img_nrows, img_ncols, 3))
     transformed_image = trans_net(base_image)
-    # if K.image_data_format() == 'channels_first':
-    #     transformed_image = K.reshape(transformed_image, (-1, 3, img_nrows, img_ncols))
-    # else:
-    #     transformed_image = K.reshape(transformed_image, (-1, img_nrows, img_ncols, 3))
 
-    input_tensor = K.concatenate([base_image,
-                                  style_image,
-                                  transformed_image], axis=0)
-    features = los_net(input_tensor)
+    input_tensor = Concatenate(axis=0)([base_image,
+                                        style_image,
+                                        transformed_image])
+    output_tensor = los_net(input_tensor)
+    output_tensor.append(transformed_image)
 
-
-    # base_features = los_net(base_image)
-    # style_features = los_net(style_image)
-    # transformed_features = los_net(transformed_image)
-
-    # loss = K.variable(0.0)
-    # # content loss
-    # for i in range(len(content_feature_layers)):
-    #     base = base_features[i]
-    #     transformed = transformed_features[i]
-    #     x = content_weight * content_loss(base, transformed)
-    #     print(x.shape)
-    #     print(loss.shape)
-    #     loss.assign_add()
-    # # style loss
-    # for i in range(len(style_feature_layers)):
-    #     style = style_features[i + len(content_feature_layers)]
-    #     transformed = transformed_features[i + len(content_feature_layers)]
-    #     loss.assign_add(style_weight * style_loss(style, transformed))
+    overall_model = Model(inputs=[base_image, style_image], outputs=output_tensor)
+    plot_model(overall_model, to_file="img/model/overall.png", show_shapes=True)
+    return overall_model
