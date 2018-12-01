@@ -1,6 +1,6 @@
 from keras import backend as K
 
-from conf import content_weight, style_weight, tv_weight, style_feature_layers, content_feature_layers
+from conf import content_weight, style_weight, tv_weight
 
 
 # the gram matrix of an image tensor (feature-wise outer product)
@@ -55,17 +55,33 @@ def total_variation_loss(x):
     return K.sum(K.sqrt(a + b))
 
 
-def loss_function(y_pred, y_true):
-    loss = K.variable(0.0)
-    # content loss
-    for i in range(len(content_feature_layers)):
-        base = y_pred[i][0, :, :, :]
-        transformed = y_pred[i][2, :, :, :]
-        loss.assign_add(content_weight * content_loss(base, transformed))
-    # style loss
-    for i in range(len(style_feature_layers)):
-        style = y_pred[i + len(content_feature_layers)][1, :, :, :]
-        transformed = y_pred[i + len(content_feature_layers)][2, :, :, :]
-        loss.assign_add(style_weight * style_loss(style, transformed))
-    # total variation loss
-    loss.assign_add(tv_weight * total_variation_loss(y_pred[-1]))
+def content_loss_func(y_pred, y_true):
+    base = y_pred[0, :, :, :]
+    transformed = y_pred[2, :, :, :]
+    return content_weight * content_loss(base, transformed)
+
+
+def style_loss_func(y_pred, y_true):
+    style = y_pred[1, :, :, :]
+    transformed = y_pred[2, :, :, :]
+    return style_weight * style_loss(style, transformed)
+
+
+def tv_loss_func(y_pred, y_true):
+    return tv_weight * total_variation_loss(y_pred)
+
+
+# def loss_function(y_pred, y_true):
+#     loss = K.variable(0.0)
+#     # content loss
+#     for i in range(len(content_feature_layers)):
+#         base = y_pred[i][0, :, :, :]
+#         transformed = y_pred[i][2, :, :, :]
+#         loss.assign_add(content_weight * content_loss(base, transformed))
+#     # style loss
+#     for i in range(len(style_feature_layers)):
+#         style = y_pred[i + len(content_feature_layers)][1, :, :, :]
+#         transformed = y_pred[i + len(content_feature_layers)][2, :, :, :]
+#         loss.assign_add(style_weight * style_loss(style, transformed))
+#     # total variation loss
+#     loss.assign_add(tv_weight * total_variation_loss(y_pred[-1]))

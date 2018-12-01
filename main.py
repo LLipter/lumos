@@ -1,4 +1,10 @@
 from model import transform_net, loss_net, overall_net
+import os
+from util import preprocess_image, load_data
+from keras import backend as K
+from keras.optimizers import Adam
+from conf import style_feature_layers, content_feature_layers
+from loss import content_loss_func, style_loss_func, tv_loss_func
 
 if __name__ == "__main__":
     print("hello world")
@@ -13,5 +19,22 @@ if __name__ == "__main__":
     # for key in outputs_dict.keys():
     #     print(key)
 
+    img_paths = []
+    for root, dirs, files in os.walk("img/test"):
+        for filename in files:
+            img_paths.append(os.path.join(root, filename))
+    train_data = load_data(img_paths)
+    style_data = preprocess_image("img/style/candy.jpg")
+    style_data = K.variable(style_data)
+    style_data = K.repeat_elements(style_data, train_data.shape[0], axis=0)
+
     model = overall_net()
-    # print(model)
+    opt = Adam()
+    loss_func = []
+    for _ in range(len(content_feature_layers)):
+        loss_func.append(content_loss_func)
+    for _ in range(len(style_feature_layers)):
+        loss_func.append(style_loss_func)
+    loss_func.append(tv_loss_func)
+    model.compile(opt, loss=loss_func)
+    # model.fit(x=[train_data, style_data], batch_size=4, epochs=10)
