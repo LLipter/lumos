@@ -1,4 +1,5 @@
 from keras import backend as K
+from keras.layers import Flatten
 
 from conf import content_weight, style_weight, tv_weight
 
@@ -20,22 +21,26 @@ def gram_matrix(x):
 # It is based on the gram matrices (which capture style) of
 # feature maps from the style reference image
 # and from the generated image
-def style_loss(style, combination):
+def style_loss(x):
+    style, combination = x[0], x[1]
     assert K.ndim(style) == 3
     assert style.shape == combination.shape
     S = gram_matrix(style)
     C = gram_matrix(combination)
-    return K.sum(K.square(S - C))
+    loss = style_weight * K.sum(K.square(S - C))
+    return K.reshape(loss, shape=(1,))
 
 
 # an auxiliary loss function
 # designed to maintain the "content" of the
 # base image in the generated image
-def content_loss(base, combination):
+def content_loss(x):
+    base, combination = x[0], x[1]
     assert K.ndim(base) == 3
     assert base.shape == combination.shape
     size = int(base.shape[0] * base.shape[1] * base.shape[2])
-    return K.sum(K.square(combination - base)) / size
+    loss = content_weight * K.sum(K.square(combination - base)) / size
+    return K.reshape(loss, shape=(1,))
 
 
 # the 3rd loss function, total variation loss,
@@ -52,23 +57,23 @@ def total_variation_loss(x):
             x[:x.shape[0] - 1, :x.shape[1] - 1, :] - x[1:, :x.shape[1] - 1, :])
         b = K.square(
             x[:x.shape[0] - 1, :x.shape[1] - 1, :] - x[:x.shape[0] - 1, 1:, :])
-    return K.sum(K.sqrt(a + b))
+    loss = tv_weight * K.sum(K.sqrt(a + b))
+    return K.reshape(loss, shape=(1,))
 
-
-def content_loss_func(y_pred, y_true):
-    base = y_pred[0, :, :, :]
-    transformed = y_pred[2, :, :, :]
-    return content_weight * content_loss(base, transformed)
-
-
-def style_loss_func(y_pred, y_true):
-    style = y_pred[1, :, :, :]
-    transformed = y_pred[2, :, :, :]
-    return style_weight * style_loss(style, transformed)
-
-
-def tv_loss_func(y_pred, y_true):
-    return tv_weight * total_variation_loss(y_pred)
+# def content_loss_func(y_pred, y_true):
+#     base = y_pred[0, :, :, :]
+#     transformed = y_pred[2, :, :, :]
+#     return content_weight * content_loss(base, transformed)
+#
+#
+# def style_loss_func(y_pred, y_true):
+#     style = y_pred[1, :, :, :]
+#     transformed = y_pred[2, :, :, :]
+#     return style_weight * style_loss(style, transformed)
+#
+#
+# def tv_loss_func(y_pred, y_true):
+#     return tv_weight * total_variation_loss(y_pred)
 
 
 # def loss_function(y_pred, y_true):

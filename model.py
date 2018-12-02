@@ -6,6 +6,7 @@ from keras.applications import vgg19
 from keras_contrib.layers import InstanceNormalization
 
 from conf import img_nrows, img_ncols, style_feature_layers, content_feature_layers
+from loss import content_loss, style_loss, total_variation_loss
 
 
 def down_sampling(x, filters, kernel_size, strides, padding="same", activation="relu"):
@@ -128,9 +129,26 @@ def overall_net():
     input_tensor = Concatenate(axis=0)([base_image,
                                         style_image,
                                         transformed_image])
-    output_tensor = los_net(input_tensor)
-    output_tensor.append(transformed_image)
+    features = los_net(input_tensor)
 
-    overall_model = Model(inputs=[base_image, style_image], outputs=output_tensor)
+    loss_layers = []
+    for i in range(len(content_feature_layers)):
+        base_feature = features[i][0, :, :, :]
+        transformed_feature = features[i][2, :, :, :]
+        layer = Lambda(content_loss)([base_feature, transformed_feature])
+        loss_layers.append(layer)
+    for i in range(len(style_feature_layers)):
+        style_feature = features[i + len(content_feature_layers)][1, :, :, :]
+        transformed_feature = features[i + len(content_feature_layers)][2, :, :, :]
+        layer = Lambda(style_loss)([style_feature, transformed_feature])
+        loss_layers.append(layer)
+    loss_layers.append(Lambda(total_variation_loss)(input_tensor[2, :, :, :]))
+
+
+    for layer in loss_layers:
+        print(layer.shape)
+    loss = Add()(loss_layers)
+
+    overall_model = Model(inputs=[base_image, style_image], outputs=loss)
     plot_model(overall_model, to_file="img/model/overall.png", show_shapes=True)
     return overall_model
