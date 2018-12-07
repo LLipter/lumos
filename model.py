@@ -78,7 +78,7 @@ def transform_net():
 
     deconv1 = up_sampling(resi5, 64, 3, 2)
     deconv2 = up_sampling(deconv1, 32, 3, 2)
-    deconv3 = up_sampling(deconv2, 3, 9, 1)
+    deconv3 = up_sampling(deconv2, 3, 9, 1, activation="tanh")
 
     output = Lambda(lambda x: x * 128)(deconv3)
 
