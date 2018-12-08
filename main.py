@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import time
 
 
-overall_model, loss_net = overall_net()
+overall_model, loss_model = overall_net()
 
 def get_file_paths(path):
     paths = []
@@ -36,7 +36,7 @@ def get_style_feature():
     feature_path = os.path.join(style_feature_dirpath, style_name) + ".npz"
     if not os.path.exists(feature_path):
         style_image = preprocess_image(style_image_path)
-        feature = loss_net.predict(style_image)
+        feature = loss_model.predict(style_image)
         feature = feature[len(content_feature_layers):]
         feature_dict = {}
         for i, layer_name in enumerate(style_feature_layers):
@@ -61,7 +61,7 @@ def get_content_feature(filename):
     feature_path = os.path.join(train_feature_dirpath, filename) + ".npz"
     if not os.path.exists(feature_path):
         train_image = preprocess_image(image_path)
-        feature = loss_net.predict(train_image)
+        feature = loss_model.predict(train_image)
         feature = feature[:len(content_feature_layers)]
         feature_dict = {}
         for i, layer_name in enumerate(content_feature_layers):
@@ -92,7 +92,7 @@ def generator(batch_size):
                                     [content_features[i][layer_name] for i in range(len(content_features))]
                                     )
                             for layer_name in content_feature_layers]
-        yield [imgs] + content_features + style_features
+        yield ([imgs] + content_features + style_features, K.constant(0, shape=(1,)))
 
 
 def transform_test_image(epoch, logs):
@@ -115,11 +115,14 @@ if __name__ == "__main__":
     print("hello lumos!")
 
     overall_model.summary()
+    opt = Adam()
+    overall_model.compile(optimizer=opt, loss=lambda y_pred, y_true: y_pred)
     predict_callback = LambdaCallback(on_epoch_end=transform_test_image)
+
     model_path = os.path.join(model_dirpath, style_name) + ".hdf5"
     checkpointer = ModelCheckpoint(filepath=model_dirpath)
     overall_model.fit_generator(generator(batch_size=4),
                                 steps_per_epoch=250,
                                 epochs=100,
                                 callbacks=[predict_callback, checkpointer])
-    
+

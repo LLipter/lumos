@@ -1,5 +1,5 @@
 from keras import backend as K
-from keras.layers import Input, Conv2D, Add, Conv2DTranspose, Activation, Lambda, Reshape
+from keras.layers import Input, Conv2D, Add, Conv2DTranspose, Activation, Lambda, Reshape, Dense, Flatten
 from keras.models import Model
 from keras.utils import plot_model
 from keras.applications import vgg19
@@ -65,6 +65,7 @@ def transform_net():
         input_tensor = Input(shape=(3, img_nrows, img_ncols))
     else:
         input_tensor = Input(shape=(img_nrows, img_ncols, 3))
+
 
     conv1 = down_sampling(input_tensor, 32, 9, 1)
     conv2 = down_sampling(conv1, 64, 3, 2)
