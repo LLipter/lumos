@@ -87,6 +87,7 @@ def transform_net():
     return transform_model
 
 
+is_first = True
 content_feature_shape = []
 style_feature_shape = []
 
@@ -110,13 +111,17 @@ def loss_net():
     # get the symbolic outputs of each "key" layer (we gave them unique names).
     outputs_dict = dict([(layer.name, [layer.output, layer.output_shape]) for layer in vgg19_model.layers])
 
+    global is_first
     output_tensors = []
     for layer_name in content_feature_layers:
         output_tensors.append(outputs_dict[layer_name][0])
-        content_feature_shape.append(outputs_dict[layer_name][1])
+        if is_first:
+            content_feature_shape.append(outputs_dict[layer_name][1])
     for layer_name in style_feature_layers:
         output_tensors.append(outputs_dict[layer_name][0])
-        style_feature_shape.append(outputs_dict[layer_name][1])
+        if is_first:
+            style_feature_shape.append(outputs_dict[layer_name][1])
+    is_first = False
     return Model(inputs=input_tensor, outputs=output_tensors, name="lossNet")
 
 
@@ -150,10 +155,11 @@ def overall_net():
     for i in range(len(style_feature_layers)):
         # fix the shape
         trans_feature = transformed_features[i + len(content_feature_layers)]
-        trans_feature = Reshape(target_shape=style_feature_shape[i][1:], name="TransformedFeature%d" % (i+1))(trans_feature)
+        trans_feature = Reshape(target_shape=style_feature_shape[i][1:], name="TransformedFeatureY%d" % (i+1))(trans_feature)
         s_loss = Lambda(style_loss, name="StyleLoss%d" % (i+1))([style_features[i], trans_feature])
         s_losses.append(s_loss)
 
+    transformed_image = Reshape(target_shape=(img_nrows, img_ncols, 3), name="TransformedImage")(transformed_image)
     tv_loss = Lambda(total_variation_loss, name="TvLoss")(transformed_image)
 
     losses = c_losses + s_losses + [tv_loss]
@@ -162,4 +168,4 @@ def overall_net():
 
     overall_model = Model(inputs=input_tensors, outputs=loss)
     plot_model(overall_model, to_file="img/model/overall.png", show_shapes=True)
-    return overall_model, los_net
+    return overall_model

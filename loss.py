@@ -58,15 +58,19 @@ def total_variation_loss(x):
     # print(x.shape)
     assert K.ndim(x) == 4
     if K.image_data_format() == 'channels_first':
+        height = int(x.shape[2])
+        width = int(x.shape[3])
         a = K.square(
-            x[:, :, :x.shape[2] - 1, :x.shape[3] - 1] - x[:, :, :, 1:, :x.shape[3] - 1])
+            x[:, :, :height - 1, :width - 1] - x[:, :, :, 1:, :width - 1])
         b = K.square(
-            x[:, :, :x.shape[2] - 1, :x.shape[3] - 1] - x[:, :, :, :x.shape[2] - 1, 1:])
+            x[:, :, :height - 1, :width - 1] - x[:, :, :, :height - 1, 1:])
     else:
+        height = int(x.shape[1])
+        width = int(x.shape[2])
         a = K.square(
-            x[:, :x.shape[1] - 1, :x.shape[2] - 1, :] - x[:, 1:, :x.shape[2] - 1, :])
+            x[:, :height - 1, :width - 1, :] - x[:, 1:, :width - 1, :])
         b = K.square(
-            x[:, :x.shape[1] - 1, :x.shape[2] - 1, :] - x[:, :x.shape[1] - 1, 1:, :])
+            x[:, :height - 1, :width - 1, :] - x[:, :height - 1, 1:, :])
     loss = tv_weight * K.sum(K.sqrt(a + b), axis=[1, 2, 3])
     loss = K.reshape(loss, shape=(-1, 1))
     # print(loss.shape)

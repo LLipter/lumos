@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import time
 
 
-overall_model, loss_model = overall_net()
+loss_model = None
 
 def get_file_paths(path):
     paths = []
@@ -92,7 +92,7 @@ def generator(batch_size):
                                     [content_features[i][layer_name] for i in range(len(content_features))]
                                     )
                             for layer_name in content_feature_layers]
-        yield ([imgs] + content_features + style_features, K.constant(0, shape=(1,)))
+        yield ([imgs] + content_features + style_features, np.zeros((batch_size,)))
 
 
 def transform_test_image(epoch, logs):
@@ -113,10 +113,12 @@ def transform_test_image(epoch, logs):
 
 if __name__ == "__main__":
     print("hello lumos!")
-
+    loss_model = loss_net()
+    loss_model.compile(optimizer="adam", loss=lambda y_true, y_pred: y_pred)
+    loss_model._make_predict_function()
+    overall_model = overall_net()
     overall_model.summary()
-    opt = Adam()
-    overall_model.compile(optimizer=opt, loss=lambda y_true, y_pred: y_pred)
+    overall_model.compile(optimizer="adam", loss=lambda y_true, y_pred: y_pred)
     predict_callback = LambdaCallback(on_epoch_end=transform_test_image)
 
     model_path = os.path.join(model_dirpath, style_name) + ".hdf5"
