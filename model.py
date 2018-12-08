@@ -80,7 +80,7 @@ def transform_net():
     deconv2 = up_sampling(deconv1, 32, 3, 2)
     deconv3 = up_sampling(deconv2, 3, 9, 1, activation="tanh")
 
-    output = Lambda(lambda x: x * 127)(deconv3)
+    output = Lambda(lambda x: x * 127.5)(deconv3)
 
     transform_model = Model(inputs=input_tensor, outputs=output, name="transNet")
     plot_model(transform_model, to_file="img/model/transform_net.png", show_shapes=True)
@@ -155,7 +155,7 @@ def overall_net():
     for i in range(len(style_feature_layers)):
         # fix the shape
         trans_feature = transformed_features[i + len(content_feature_layers)]
-        trans_feature = Reshape(target_shape=style_feature_shape[i][1:], name="TransformedFeatureY%d" % (i+1))(trans_feature)
+        trans_feature = Reshape(target_shape=style_feature_shape[i][1:], name="TransformedFeature%d" % (i+1))(trans_feature)
         s_loss = Lambda(style_loss, name="StyleLoss%d" % (i+1))([style_features[i], trans_feature])
         s_losses.append(s_loss)
 
@@ -164,7 +164,7 @@ def overall_net():
 
     losses = c_losses + s_losses + [tv_loss]
 
-    loss = Add()(losses)
+    loss = Add(name="losses")(losses)
 
     overall_model = Model(inputs=input_tensors, outputs=loss)
     plot_model(overall_model, to_file="img/model/overall.png", show_shapes=True)

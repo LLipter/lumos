@@ -17,6 +17,8 @@ def gram_matrix(x):
         features = K.reshape(features, shape=(-1,
                                               int_shape[3],
                                               int_shape[1] * int_shape[2]))
+    # print(features.shape)
+    # print(K.permute_dimensions(features, (0, 2, 1)).shape)
     gram = K.batch_dot(features, K.permute_dimensions(features, (0, 2, 1))) / size
     # print("gram size", gram.shape)
     return gram

@@ -31,10 +31,3 @@ def deprocess_image(x):
     x = np.clip(x, 0, 255).astype('uint8')
     return x
 
-
-def load_data(img_paths):
-    imgs = []
-    for path in img_paths:
-        img = preprocess_image(path)
-        imgs.append(img)
-    return K.concatenate(imgs, axis=0)
