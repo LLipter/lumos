@@ -6,7 +6,8 @@ from conf import content_weight, style_weight, tv_weight
 # the gram matrix of an image tensor (feature-wise outer product)
 def gram_matrix(x):
     assert K.ndim(x) == 4
-    size = int(x.shape[1] * x.shape[2] * x.shape[3])
+    int_shape = K.int_shape(x)
+    size = int_shape[1] * int_shape[2] * int_shape[3]
     if K.image_data_format() == 'channels_first':
         features = K.reshape(x, shape=(-1,
                                        int(x.shape[1]),
@@ -45,7 +46,8 @@ def content_loss(x):
     # print(base.shape)
     # print(combination.shape)
     assert K.ndim(base) == 4
-    size = int(base.shape[1] * base.shape[2] * base.shape[3])
+    int_shape = K.int_shape(base)
+    size = int_shape[1] * int_shape[2] * int_shape[3]
     loss = content_weight * K.sum(K.square(combination - base), axis=[1, 2, 3]) / size
     loss = K.reshape(loss, shape=(-1, 1))
     # print(loss.shape)

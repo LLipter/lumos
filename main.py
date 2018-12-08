@@ -118,7 +118,8 @@ if __name__ == "__main__":
     loss_model._make_predict_function()
     overall_model = overall_net()
     overall_model.summary()
-    overall_model.compile(optimizer="adam", loss=lambda y_true, y_pred: y_pred)
+    opt = Adam(lr=1e-5)
+    overall_model.compile(optimizer=opt, loss=lambda y_true, y_pred: y_pred)
     predict_callback = LambdaCallback(on_epoch_end=transform_test_image)
 
     model_path = os.path.join(model_dirpath, style_name) + ".hdf5"
