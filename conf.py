@@ -7,3 +7,4 @@ style_feature_layers = ['block1_conv1', 'block2_conv1',
                         'block3_conv1', 'block4_conv1',
                         'block5_conv1']
 content_feature_layers = ['block5_conv2']
+style = "candy"
