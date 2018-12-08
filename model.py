@@ -168,4 +168,4 @@ def overall_net():
 
     overall_model = Model(inputs=input_tensors, outputs=loss)
     plot_model(overall_model, to_file="img/model/overall.png", show_shapes=True)
-    return overall_model
+    return overall_model, trans_net, los_net

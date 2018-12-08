@@ -7,10 +7,12 @@ from keras.callbacks import LambdaCallback, ModelCheckpoint
 import numpy as np
 from conf import *
 import matplotlib.pyplot as plt
+import tensorflow as tf
 import time
 
 
 loss_model = None
+trans_model = None
 
 def get_file_paths(path):
     paths = []
@@ -36,7 +38,8 @@ def get_style_feature():
     feature_path = os.path.join(style_feature_dirpath, style_name) + ".npz"
     if not os.path.exists(feature_path):
         style_image = preprocess_image(style_image_path)
-        feature = loss_model.predict(style_image)
+        with graph.as_default():
+            feature = loss_model.predict(style_image)
         feature = feature[len(content_feature_layers):]
         feature_dict = {}
         for i, layer_name in enumerate(style_feature_layers):
@@ -61,7 +64,8 @@ def get_content_feature(filename):
     feature_path = os.path.join(train_feature_dirpath, filename) + ".npz"
     if not os.path.exists(feature_path):
         train_image = preprocess_image(image_path)
-        feature = loss_model.predict(train_image)
+        with graph.as_default():
+            feature = loss_model.predict(train_image)
         feature = feature[:len(content_feature_layers)]
         feature_dict = {}
         for i, layer_name in enumerate(content_feature_layers):
@@ -101,31 +105,45 @@ def transform_test_image(epoch, logs):
     row = len(filenames) / 5
     col = 5
     plt.figure(figsize=(16, 8))
+    imgs = []
     for i, filename in enumerate(filenames, start=1):
         filepath = os.path.join(test_image_dirpath, filename)
         img = preprocess_image(filepath)
+        imgs.append(img)
+    imgs = np.vstack(imgs)
+    with graph.as_default():
+        trans_images = trans_model.predict(imgs)
+
+    for i in range(len(filenames)):
+        img = trans_images[i]
         img = deprocess_image(img)
-        plt.subplot(row, col, i)
+        plt.subplot(row, col, i+1)
         plt.imshow(img)
+
     save_path = os.path.join(test_image_savepath, "%d-%d.png" % (time.time(), epoch))
     plt.savefig(save_path)
 
 
 if __name__ == "__main__":
     print("hello lumos!")
-    loss_model = loss_net()
-    loss_model.compile(optimizer="adam", loss=lambda y_true, y_pred: y_pred)
-    loss_model._make_predict_function()
-    overall_model = overall_net()
+
+    overall_model, trans_model, loss_model = overall_net()
+    global graph
+    graph = tf.get_default_graph()
+
     overall_model.summary()
-    opt = Adam(lr=1e-5)
+    opt = Adam(lr=learning_rate)
     overall_model.compile(optimizer=opt, loss=lambda y_true, y_pred: y_pred)
     predict_callback = LambdaCallback(on_epoch_end=transform_test_image)
 
     model_path = os.path.join(model_dirpath, style_name) + ".hdf5"
-    checkpointer = ModelCheckpoint(filepath=model_dirpath)
+
+    if os.path.exists(model_path):
+        overall_model.load_weights(model_path)
+
+    checkpointer = ModelCheckpoint(filepath=model_path, save_weights_only=True)
     overall_model.fit_generator(generator(batch_size=4),
-                                steps_per_epoch=250,
-                                epochs=100,
+                                steps_per_epoch=50,
+                                epochs=500,
                                 callbacks=[predict_callback, checkpointer])
 

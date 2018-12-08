@@ -10,13 +10,13 @@ def gram_matrix(x):
     size = int_shape[1] * int_shape[2] * int_shape[3]
     if K.image_data_format() == 'channels_first':
         features = K.reshape(x, shape=(-1,
-                                       int(x.shape[1]),
-                                       int(x.shape[2] * x.shape[3])))
+                                       int_shape[1],
+                                       int_shape[2] * int_shape[3]))
     else:
         features = K.permute_dimensions(x, (0, 3, 1, 2))
         features = K.reshape(features, shape=(-1,
-                                              int(x.shape[3]),
-                                              int(x.shape[1] * x.shape[2])))
+                                              int_shape[3],
+                                              int_shape[1] * int_shape[2]))
     gram = K.batch_dot(features, K.permute_dimensions(features, (0, 2, 1))) / size
     # print("gram size", gram.shape)
     return gram
@@ -59,16 +59,17 @@ def content_loss(x):
 def total_variation_loss(x):
     # print(x.shape)
     assert K.ndim(x) == 4
+    int_shape = K.int_shape(x)
     if K.image_data_format() == 'channels_first':
-        height = int(x.shape[2])
-        width = int(x.shape[3])
+        height = int_shape[2]
+        width = int_shape[3]
         a = K.square(
             x[:, :, :height - 1, :width - 1] - x[:, :, :, 1:, :width - 1])
         b = K.square(
             x[:, :, :height - 1, :width - 1] - x[:, :, :, :height - 1, 1:])
     else:
-        height = int(x.shape[1])
-        width = int(x.shape[2])
+        height = int_shape[1]
+        width = int_shape[2]
         a = K.square(
             x[:, :height - 1, :width - 1, :] - x[:, 1:, :width - 1, :])
         b = K.square(
