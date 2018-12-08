@@ -23,8 +23,16 @@ def gram_matrix(x):
 # and from the generated image
 def style_loss(x):
     style, combination = x[0], x[1]
+    print(style.shape)
+    print(combination.shape)
+
+    x = K.reshape(style, shape=(-1, int(style.shape[1]*style.shape[2]), int(style.shape[3])))
+    print(x.shape)
+
+    x = K.reshape(combination, shape=(combination.shape[0], -1, combination.shape[3]))
+    print(x.shape)
+
     assert K.ndim(style) == 3
-    assert style.shape == combination.shape
     S = gram_matrix(style)
     C = gram_matrix(combination)
     loss = style_weight * K.sum(K.square(S - C))
@@ -36,29 +44,35 @@ def style_loss(x):
 # base image in the generated image
 def content_loss(x):
     base, combination = x[0], x[1]
-    assert K.ndim(base) == 3
-    assert base.shape == combination.shape
-    size = int(base.shape[0] * base.shape[1] * base.shape[2])
-    loss = content_weight * K.sum(K.square(combination - base)) / size
-    return K.reshape(loss, shape=(1,))
+    # print(base.shape)
+    # print(combination.shape)
+    assert K.ndim(base) == 4
+    size = int(base.shape[1] * base.shape[2] * base.shape[3])
+    loss = content_weight * K.sum(K.square(combination - base), axis=[1, 2, 3]) / size
+    loss = K.reshape(loss, shape=(-1, 1))
+    # print(loss.shape)
+    return loss
 
 
 # the 3rd loss function, total variation loss,
 # designed to keep the generated image locally coherent
 def total_variation_loss(x):
-    assert K.ndim(x) == 3
+    # print(x.shape)
+    assert K.ndim(x) == 4
     if K.image_data_format() == 'channels_first':
         a = K.square(
-            x[:, :x.shape[1] - 1, :x.shape[2] - 1] - x[:, :, 1:, :x.shape[2] - 1])
+            x[:, :, :x.shape[2] - 1, :x.shape[3] - 1] - x[:, :, :, 1:, :x.shape[3] - 1])
         b = K.square(
-            x[:, :x.shape[1] - 1, :x.shape[2] - 1] - x[:, :, :x.shape[1] - 1, 1:])
+            x[:, :, :x.shape[2] - 1, :x.shape[3] - 1] - x[:, :, :, :x.shape[2] - 1, 1:])
     else:
         a = K.square(
-            x[:x.shape[0] - 1, :x.shape[1] - 1, :] - x[1:, :x.shape[1] - 1, :])
+            x[:, :x.shape[1] - 1, :x.shape[2] - 1, :] - x[:, 1:, :x.shape[2] - 1, :])
         b = K.square(
-            x[:x.shape[0] - 1, :x.shape[1] - 1, :] - x[:x.shape[0] - 1, 1:, :])
-    loss = tv_weight * K.sum(K.sqrt(a + b))
-    return K.reshape(loss, shape=(1,))
+            x[:, :x.shape[1] - 1, :x.shape[2] - 1, :] - x[:, :x.shape[1] - 1, 1:, :])
+    loss = tv_weight * K.sum(K.sqrt(a + b), axis=[1, 2, 3])
+    loss = K.reshape(loss, shape=(-1, 1))
+    # print(loss.shape)
+    return loss
 
 # def content_loss_func(y_pred, y_true):
 #     base = y_pred[0, :, :, :]

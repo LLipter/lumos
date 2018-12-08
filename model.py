@@ -87,6 +87,10 @@ def transform_net():
     return transform_model
 
 
+content_feature_shape = []
+style_feature_shape = []
+
+
 def loss_net():
     # get tensor representations of our images
     if K.image_data_format() == 'channels_first':
@@ -104,13 +108,15 @@ def loss_net():
         layer.trainable = False
 
     # get the symbolic outputs of each "key" layer (we gave them unique names).
-    outputs_dict = dict([(layer.name, layer.output) for layer in vgg19_model.layers])
+    outputs_dict = dict([(layer.name, [layer.output, layer.output_shape]) for layer in vgg19_model.layers])
 
     output_tensors = []
     for layer_name in content_feature_layers:
-        output_tensors.append(outputs_dict[layer_name])
+        output_tensors.append(outputs_dict[layer_name][0])
+        content_feature_shape.append(outputs_dict[layer_name][1])
     for layer_name in style_feature_layers:
-        output_tensors.append(outputs_dict[layer_name])
+        output_tensors.append(outputs_dict[layer_name][0])
+        style_feature_shape.append(outputs_dict[layer_name][1])
     return Model(inputs=input_tensor, outputs=output_tensors)
 
 
@@ -118,37 +124,85 @@ def overall_net():
     trans_net = transform_net()
     los_net = loss_net()
 
+    content_features = []
+    for input_shape in content_feature_shape:
+        content_features.append(Input(shape=input_shape[1:]))
+    style_features = []
+    for input_shape in style_feature_shape:
+        style_features.append(Input(shape=input_shape[1:]))
+
     if K.image_data_format() == 'channels_first':
-        base_image = Input(shape=(3, img_nrows, img_ncols))
-        style_image = Input(shape=(3, img_nrows, img_ncols))
+        raw_image = Input(shape=(3, img_nrows, img_ncols))
     else:
-        base_image = Input(shape=(img_nrows, img_ncols, 3))
-        style_image = Input(shape=(img_nrows, img_ncols, 3))
-    transformed_image = trans_net(base_image)
+        raw_image = Input(shape=(img_nrows, img_ncols, 3))
 
-    input_tensor = Concatenate(axis=0)([base_image,
-                                        style_image,
-                                        transformed_image])
-    features = los_net(input_tensor)
+    input_tensors = [raw_image] + content_features + style_features
 
-    loss_layers = []
+    transformed_image = trans_net(raw_image)
+    transformed_features = los_net(transformed_image)
+
+    tv_loss = Lambda(total_variation_loss)(transformed_image)
+
+    c_losses = []
     for i in range(len(content_feature_layers)):
-        base_feature = features[i][0, :, :, :]
-        transformed_feature = features[i][2, :, :, :]
-        layer = Lambda(content_loss)([base_feature, transformed_feature])
-        loss_layers.append(layer)
+        c_loss = Lambda(content_loss)([content_features[i], transformed_features[i]])
+        c_losses.append(c_loss)
+
+    s_losses = []
     for i in range(len(style_feature_layers)):
-        style_feature = features[i + len(content_feature_layers)][1, :, :, :]
-        transformed_feature = features[i + len(content_feature_layers)][2, :, :, :]
-        layer = Lambda(style_loss)([style_feature, transformed_feature])
-        loss_layers.append(layer)
-    loss_layers.append(Lambda(total_variation_loss)(input_tensor[2, :, :, :]))
+        s_loss = Lambda(style_loss)([style_features[i], transformed_features[i + len(content_feature_layers)]])
+        s_losses.append(s_loss)
 
+    losses = c_losses + s_losses + [tv_loss]
 
-    for layer in loss_layers:
-        print(layer.shape)
-    loss = Add()(loss_layers)
+    loss = Add()(losses)
 
-    overall_model = Model(inputs=[base_image, style_image], outputs=loss)
+    overall_model = Model(inputs=input_tensors, outputs=loss)
     plot_model(overall_model, to_file="img/model/overall.png", show_shapes=True)
     return overall_model
+
+
+
+
+
+
+
+
+
+
+
+
+    # if K.image_data_format() == 'channels_first':
+    #     base_image = Input(shape=(3, img_nrows, img_ncols))
+    #     style_image = Input(shape=(3, img_nrows, img_ncols))
+    # else:
+    #     base_image = Input(shape=(img_nrows, img_ncols, 3))
+    #     style_image = Input(shape=(img_nrows, img_ncols, 3))
+    # transformed_image = trans_net(base_image)
+    #
+    # input_tensor = Concatenate(axis=0)([base_image,
+    #                                     style_image,
+    #                                     transformed_image])
+    # features = los_net(input_tensor)
+    #
+    # loss_layers = []
+    # for i in range(len(content_feature_layers)):
+    #     base_feature = features[i][0, :, :, :]
+    #     transformed_feature = features[i][2, :, :, :]
+    #     layer = Lambda(content_loss)([base_feature, transformed_feature])
+    #     loss_layers.append(layer)
+    # for i in range(len(style_feature_layers)):
+    #     style_feature = features[i + len(content_feature_layers)][1, :, :, :]
+    #     transformed_feature = features[i + len(content_feature_layers)][2, :, :, :]
+    #     layer = Lambda(style_loss)([style_feature, transformed_feature])
+    #     loss_layers.append(layer)
+    # loss_layers.append(Lambda(total_variation_loss)(input_tensor[2, :, :, :]))
+    #
+    #
+    # for layer in loss_layers:
+    #     print(layer.shape)
+    # loss = Add()(loss_layers)
+    #
+    # overall_model = Model(inputs=[base_image, style_image], outputs=loss)
+    # plot_model(overall_model, to_file="img/model/overall.png", show_shapes=True)
+    # return overall_model

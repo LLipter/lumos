@@ -36,5 +36,5 @@ if __name__ == "__main__":
     # for _ in range(len(style_feature_layers)):
     #     loss_func.append(style_loss_func)
     # loss_func.append(tv_loss_func)
-    model.compile(opt, loss=lambda y_pred, y_true: y_pred)
+    # model.compile(opt, loss=lambda y_pred, y_true: y_pred)
     # model.fit(x=[train_data, style_data], batch_size=4, epochs=10)
