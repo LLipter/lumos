@@ -1,10 +1,13 @@
 from model import transform_net, loss_net, overall_net
 import os
-from util import preprocess_image, load_data
+from util import preprocess_image, deprocess_image
 from keras import backend as K
 from keras.optimizers import Adam
+from keras.callbacks import LambdaCallback, ModelCheckpoint
 import numpy as np
 from conf import *
+import matplotlib.pyplot as plt
+import time
 
 
 overall_model, loss_net = overall_net()
@@ -92,42 +95,31 @@ def generator(batch_size):
         yield [imgs] + content_features + style_features
 
 
+def transform_test_image(epoch, logs):
+    filenames = get_file_paths(test_image_dirpath)
+    filenames = sorted(filenames)
+    row = len(filenames) / 5
+    col = 5
+    plt.figure(figsize=(16, 8))
+    for i, filename in enumerate(filenames, start=1):
+        filepath = os.path.join(test_image_dirpath, filename)
+        img = preprocess_image(filepath)
+        img = deprocess_image(img)
+        plt.subplot(row, col, i)
+        plt.imshow(img)
+    save_path = os.path.join(test_image_savepath, "%d-%d.png" % (time.time(), epoch))
+    plt.savefig(save_path)
+
+
 if __name__ == "__main__":
-    print("hello world")
-    # img_paths = []
-    # for root, dirs, files in os.walk("img/test"):
-    #     for filename in files:
-    #         img_paths.append(os.path.join(root, filename))
-    # train_data = load_data(img_paths)
-    # style_data = preprocess_image("img/style/candy.jpg")
-    # style_data = K.variable(style_data)
-    # style_data = K.repeat_elements(style_data, train_data.shape[0], axis=0)
-    #
+    print("hello lumos!")
 
-    # model.summary()
-    # opt = Adam()
-    # model.compile(opt, loss=lambda y_pred, y_true: y_pred)
-
-    # a = get_file_paths("img/style/raw")
-    # print(a)
-    #
-    x = generator(10)
-    for i in x:
-        for a in i:
-            print(a.shape)
-
-
-
-    # style_image = preprocess_image("img/style/raw/candy.jpg")
-    # print(style_image)
-    #
-    # feature = loss_net.predict(style_image)
-    # feature = feature[len(content_feature_layers):]
-    # feature_dict = {}
-    # for i, layer_name in enumerate(style_feature_layers):
-    #     feature_dict[layer_name] = feature[i]
-    # print(feature_dict.keys())
-    #
-    # np.savez("img/style/feature/candy.npz", **feature_dict)
-
-
+    overall_model.summary()
+    predict_callback = LambdaCallback(on_epoch_end=transform_test_image)
+    model_path = os.path.join(model_dirpath, style_name) + ".hdf5"
+    checkpointer = ModelCheckpoint(filepath=model_dirpath)
+    overall_model.fit_generator(generator(batch_size=4),
+                                steps_per_epoch=250,
+                                epochs=100,
+                                callbacks=[predict_callback, checkpointer])
+    
