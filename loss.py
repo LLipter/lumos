@@ -1,18 +1,23 @@
 from keras import backend as K
-from keras.layers import Flatten
 
 from conf import content_weight, style_weight, tv_weight
 
 
 # the gram matrix of an image tensor (feature-wise outer product)
 def gram_matrix(x):
-    assert K.ndim(x) == 3
-    size = int(x.shape[0] * x.shape[1] * x.shape[2])
+    assert K.ndim(x) == 4
+    size = int(x.shape[1] * x.shape[2] * x.shape[3])
     if K.image_data_format() == 'channels_first':
-        features = K.batch_flatten(x)
+        features = K.reshape(x, shape=(-1,
+                                       int(x.shape[1]),
+                                       int(x.shape[2] * x.shape[3])))
     else:
-        features = K.batch_flatten(K.permute_dimensions(x, (2, 0, 1)))
-    gram = K.dot(features, K.transpose(features)) / size
+        features = K.permute_dimensions(x, (0, 3, 1, 2))
+        features = K.reshape(features, shape=(-1,
+                                              int(x.shape[3]),
+                                              int(x.shape[1] * x.shape[2])))
+    gram = K.batch_dot(features, K.permute_dimensions(features, (0, 2, 1))) / size
+    # print("gram size", gram.shape)
     return gram
 
 
@@ -23,20 +28,13 @@ def gram_matrix(x):
 # and from the generated image
 def style_loss(x):
     style, combination = x[0], x[1]
-    print(style.shape)
-    print(combination.shape)
-
-    x = K.reshape(style, shape=(-1, int(style.shape[1]*style.shape[2]), int(style.shape[3])))
-    print(x.shape)
-
-    x = K.reshape(combination, shape=(combination.shape[0], -1, combination.shape[3]))
-    print(x.shape)
-
-    assert K.ndim(style) == 3
+    assert K.ndim(style) == 4
     S = gram_matrix(style)
     C = gram_matrix(combination)
-    loss = style_weight * K.sum(K.square(S - C))
-    return K.reshape(loss, shape=(1,))
+    loss = style_weight * K.sum(K.square(S - C), axis=[1, 2])
+    loss = K.reshape(loss, shape=(-1, 1))
+    # print("loss size", loss.shape)
+    return loss
 
 
 # an auxiliary loss function
