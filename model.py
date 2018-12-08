@@ -66,7 +66,6 @@ def transform_net():
     else:
         input_tensor = Input(shape=(img_nrows, img_ncols, 3))
 
-
     conv1 = down_sampling(input_tensor, 32, 9, 1)
     conv2 = down_sampling(conv1, 64, 3, 2)
     conv3 = down_sampling(conv2, 128, 3, 2)
@@ -144,18 +143,18 @@ def overall_net():
 
     c_losses = []
     for i in range(len(content_feature_layers)):
-        c_loss = Lambda(content_loss)([content_features[i], transformed_features[i]])
+        c_loss = Lambda(content_loss, name="ContentLoss%d" % (i+1))([content_features[i], transformed_features[i]])
         c_losses.append(c_loss)
 
     s_losses = []
     for i in range(len(style_feature_layers)):
         # fix the shape
         trans_feature = transformed_features[i + len(content_feature_layers)]
-        trans_feature = Reshape(target_shape=style_feature_shape[i][1:])(trans_feature)
-        s_loss = Lambda(style_loss)([style_features[i], trans_feature])
+        trans_feature = Reshape(target_shape=style_feature_shape[i][1:], name="TransformedFeature%d" % (i+1))(trans_feature)
+        s_loss = Lambda(style_loss, name="StyleLoss%d" % (i+1))([style_features[i], trans_feature])
         s_losses.append(s_loss)
 
-    tv_loss = Lambda(total_variation_loss)(transformed_image)
+    tv_loss = Lambda(total_variation_loss, name="TvLoss")(transformed_image)
 
     losses = c_losses + s_losses + [tv_loss]
 

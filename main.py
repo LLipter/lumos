@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
     overall_model.summary()
     opt = Adam()
-    overall_model.compile(optimizer=opt, loss=lambda y_pred, y_true: y_pred)
+    overall_model.compile(optimizer=opt, loss=lambda y_true, y_pred: y_pred)
     predict_callback = LambdaCallback(on_epoch_end=transform_test_image)
 
     model_path = os.path.join(model_dirpath, style_name) + ".hdf5"
