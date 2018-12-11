@@ -6,9 +6,12 @@ from keras.optimizers import Adam
 from keras.callbacks import LambdaCallback, ModelCheckpoint
 import numpy as np
 from conf import *
+import matplotlib
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import time
+
+matplotlib.use('Agg')
 
 
 loss_model = None
