@@ -7,11 +7,11 @@ from keras.callbacks import LambdaCallback, ModelCheckpoint
 import numpy as np
 from conf import *
 import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import time
 
-matplotlib.use('Agg')
 
 
 loss_model = None
