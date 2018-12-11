@@ -14,6 +14,7 @@ import time
 loss_model = None
 trans_model = None
 
+
 def get_file_paths(path):
     paths = []
     for file in os.listdir(path):
@@ -122,11 +123,14 @@ def transform_test_image(epoch, logs):
 
     save_path = os.path.join(test_image_savepath, "%d-%d.png" % (time.time(), epoch))
     plt.savefig(save_path)
+    plt.close()
 
 
 if __name__ == "__main__":
     print("hello lumos!")
 
+    global trans_model
+    global loss_model
     overall_model, trans_model, loss_model = overall_net()
     global graph
     graph = tf.get_default_graph()

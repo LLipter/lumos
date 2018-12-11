@@ -1,5 +1,5 @@
 from keras import backend as K
-from keras.layers import Input, Conv2D, Add, Conv2DTranspose, Activation, Lambda, Reshape, Dense, Flatten
+from keras.layers import Input, Conv2D, Add, Conv2DTranspose, Activation, Lambda, Reshape, UpSampling2D
 from keras.models import Model
 from keras.utils import plot_model
 from keras.applications import vgg19
@@ -47,11 +47,20 @@ def residul(x):
 
 
 def up_sampling(x, filters, kernel_size, strides, padding="same", activation="relu"):
-    deconv = Conv2DTranspose(filters=filters,
-                             kernel_size=kernel_size,
-                             strides=strides,
-                             padding=padding,
-                             data_format=K.image_data_format())(x)
+    # deconv = Conv2DTranspose(filters=filters,
+    #                          kernel_size=kernel_size,
+    #                          strides=strides,
+    #                          padding=padding,
+    #                          data_format=K.image_data_format())(x)
+    uped = UpSampling2D(size=(2*strides, 2*strides),
+                        data_format=K.image_data_format(),
+                        interpolation="nearest")(x)
+    deconv = Conv2D(filters=filters,
+                    kernel_size=kernel_size,
+                    strides=strides,
+                    padding=padding,
+                    data_format=K.image_data_format())(uped)
+
     if K.image_data_format() == 'channels_first':
         instance_normalized = InstanceNormalization(axis=1)(deconv)
     else:
@@ -78,7 +87,12 @@ def transform_net():
 
     deconv1 = up_sampling(resi5, 64, 3, 2)
     deconv2 = up_sampling(deconv1, 32, 3, 2)
-    deconv3 = up_sampling(deconv2, 3, 9, 1, activation="tanh")
+    # deconv3 = up_sampling(deconv2, 3, 9, 1, activation="tanh")
+    deconv3 = Conv2D(filters=3,
+                     kernel_size=9,
+                     strides=1,
+                     padding="same",
+                     data_format=K.image_data_format())(deconv2)
 
     output = Lambda(lambda x: x * 127.5)(deconv3)
 

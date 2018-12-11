@@ -1,8 +1,8 @@
 img_nrows = 256
 img_ncols = 256
 content_weight = 1
-style_weight = 50
-tv_weight = 1e-3
+style_weight = 1
+tv_weight = 1
 learning_rate = 1e-4
 style_feature_layers = ['block1_conv1', 'block2_conv1',
                         'block3_conv1', 'block4_conv1',
