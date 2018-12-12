@@ -19,36 +19,21 @@ def get_style_feature():
     style_image_path = os.path.join(style_image_dirpath, style_name) + ".jpg"
     assert os.path.exists(style_image_path)
 
-    # check whether feature directory exists
-    if not os.path.exists(style_feature_dirpath):
-        os.mkdir(style_feature_dirpath)
-    assert os.path.isdir(style_feature_dirpath)
+    style_image = preprocess_image(style_image_path)
+    with graph.as_default():
+        feature = loss_model.predict(style_image)
+    feature = feature[len(content_feature_layers):]
+    feature_dict = {}
+    for i, layer_name in enumerate(style_feature_layers):
+        feature_dict[layer_name] = feature[i]
 
-    # check whether style feature has already been computed
-    # if not, recompute it
-    feature_path = os.path.join(style_feature_dirpath, style_name) + ".npz"
-    if not os.path.exists(feature_path):
-        style_image = preprocess_image(style_image_path)
-        with graph.as_default():
-            feature = loss_model.predict(style_image)
-        feature = feature[len(content_feature_layers):]
-        feature_dict = {}
-        for i, layer_name in enumerate(style_feature_layers):
-            feature_dict[layer_name] = feature[i]
-        np.savez(feature_path, **feature_dict)
-
-    return np.load(feature_path)
+    return feature_dict
 
 
 def get_content_feature(filename):
     # check whether image path is valid
     image_path = os.path.join(train_image_dirpath, filename)
     assert os.path.exists(image_path)
-
-    # check whether feature directory exists
-    if not os.path.exists(train_feature_dirpath):
-        os.mkdir(train_feature_dirpath)
-    assert os.path.isdir(train_feature_dirpath)
 
     train_image = preprocess_image(image_path)
     with graph.as_default():
