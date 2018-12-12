@@ -19,7 +19,7 @@ def gram_matrix(x):
                                               int_shape[1] * int_shape[2]))
     # print(features.shape)
     # print(K.permute_dimensions(features, (0, 2, 1)).shape)
-    gram = K.batch_dot(features, K.permute_dimensions(features, (0, 2, 1))) / size
+    gram = K.batch_dot(features, K.permute_dimensions(features, (0, 2, 1))) / size / 2
     # print("gram size", gram.shape)
     return gram
 
@@ -50,7 +50,7 @@ def content_loss(x):
     assert K.ndim(base) == 4
     int_shape = K.int_shape(base)
     size = int_shape[1] * int_shape[2] * int_shape[3]
-    loss = content_weight * K.sum(K.square(combination - base), axis=[1, 2, 3]) / size
+    loss = content_weight * K.sum(K.square(combination - base), axis=[1, 2, 3]) / size / 2
     loss = K.reshape(loss, shape=(-1, 1))
     # print(loss.shape)
     return loss

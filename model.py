@@ -2,7 +2,7 @@ from keras import backend as K
 from keras.layers import Input, Conv2D, Add, Conv2DTranspose, Activation, Lambda, Reshape, UpSampling2D
 from keras.models import Model
 from keras.utils import plot_model
-from keras.applications import vgg19
+from keras.applications import vgg16
 from keras_contrib.layers import InstanceNormalization
 
 from conf import img_nrows, img_ncols, style_feature_layers, content_feature_layers
@@ -115,15 +115,18 @@ def loss_net():
 
     # build the VGG19 network with pre-trained ImageNet weights loaded
     input_tensor = Input(shape=input_shape)
-    vgg19_model = vgg19.VGG19(input_tensor=input_tensor, weights='imagenet', include_top=False)
-    plot_model(vgg19_model, to_file="img/model/vgg19.png", show_shapes=True)
+    vgg16_model = vgg16.VGG16(input_tensor=input_tensor, weights='imagenet', include_top=False)
+    plot_model(vgg16_model, to_file="img/model/vgg16.png", show_shapes=True)
 
     # freeze weights
-    for layer in vgg19_model.layers:
+    for layer in vgg16_model.layers:
         layer.trainable = False
 
     # get the symbolic outputs of each "key" layer (we gave them unique names).
-    outputs_dict = dict([(layer.name, [layer.output, layer.output_shape]) for layer in vgg19_model.layers])
+    outputs_dict = dict([(layer.name, [layer.output, layer.output_shape]) for layer in vgg16_model.layers])
+
+    # for key in sorted(outputs_dict.keys()):
+    #     print(key)
 
     global is_first
     output_tensors = []

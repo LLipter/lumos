@@ -13,11 +13,6 @@ import tensorflow as tf
 import time
 
 
-
-loss_model = None
-trans_model = None
-
-
 def get_file_paths(path):
     paths = []
     for file in os.listdir(path):
