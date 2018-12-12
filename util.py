@@ -2,6 +2,7 @@ from keras.preprocessing.image import load_img, save_img, img_to_array
 from keras import backend as K
 from keras.applications import vgg19
 import numpy as np
+import os
 
 from conf import img_nrows, img_ncols
 
@@ -31,3 +32,11 @@ def deprocess_image(x):
     x = np.clip(x, 0, 255).astype('uint8')
     return x
 
+
+def get_file_paths(path):
+    paths = []
+    for file in os.listdir(path):
+        file_path = os.path.join(path, file)
+        if not os.path.isdir(file_path):
+            paths.append(file)
+    return paths

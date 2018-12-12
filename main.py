@@ -11,15 +11,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import time
-
-
-def get_file_paths(path):
-    paths = []
-    for file in os.listdir(path):
-        file_path = os.path.join(path, file)
-        if not os.path.isdir(file_path):
-            paths.append(file)
-    return paths
+from util import get_file_paths
 
 
 def get_style_feature():
@@ -58,20 +50,14 @@ def get_content_feature(filename):
         os.mkdir(train_feature_dirpath)
     assert os.path.isdir(train_feature_dirpath)
 
-    # check whether train feature has already been computed
-    # if not, recompute it
-    feature_path = os.path.join(train_feature_dirpath, filename) + ".npz"
-    if not os.path.exists(feature_path):
-        train_image = preprocess_image(image_path)
-        with graph.as_default():
-            feature = loss_model.predict(train_image)
-        feature = feature[:len(content_feature_layers)]
-        feature_dict = {}
-        for i, layer_name in enumerate(content_feature_layers):
-            feature_dict[layer_name] = feature[i]
-        np.savez(feature_path, **feature_dict)
-
-    return np.load(feature_path)
+    train_image = preprocess_image(image_path)
+    with graph.as_default():
+        feature = loss_model.predict(train_image)
+    feature = feature[:len(content_feature_layers)]
+    feature_dict = {}
+    for i, layer_name in enumerate(content_feature_layers):
+        feature_dict[layer_name] = feature[i]
+    return feature_dict
 
 
 def generator(batch_size):
