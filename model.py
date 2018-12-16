@@ -51,8 +51,8 @@ def up_sampling(x, filters, kernel_size, strides, padding="same", activation="re
     return activated
 
 
-def transform_net():
-    input_tensor = Input(shape=(img_nrows, img_ncols, 3))
+def transform_net(height, width):
+    input_tensor = Input(shape=(height, width, 3))
     padding = ZeroPadding2D(40)(input_tensor)
 
     conv1 = down_sampling(padding, 16, 9, 1)
@@ -119,8 +119,8 @@ def loss_net():
     return Model(inputs=input_tensor, outputs=output_tensors, name="lossNet")
 
 
-def overall_net():
-    trans_net = transform_net()
+def overall_net(height=img_nrows, width=img_ncols):
+    trans_net = transform_net(height, width)
     los_net = loss_net()
 
     content_features = []

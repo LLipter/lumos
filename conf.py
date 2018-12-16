@@ -1,13 +1,13 @@
 img_nrows = 256
 img_ncols = 256
 content_weight = 1
-style_weight = 5
-tv_weight = 1e-10
+style_weight = 1
+tv_weight = 1e-6
 learning_rate = 1e-3
 style_feature_layers = ['block1_conv2', 'block2_conv2',
                         'block3_conv3', 'block4_conv3']
 content_feature_layers = ['block3_conv3']
-style_name = "candy"
+style_name = "mosaic"
 style_image_dirpath = "img/style/raw"
 style_feature_dirpath = "img/style/feature"
 train_image_dirpath = "img/train/raw"
