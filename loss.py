@@ -7,16 +7,14 @@ from conf import content_weight, style_weight, tv_weight
 def gram_matrix(x):
     assert K.ndim(x) == 4
     int_shape = K.int_shape(x)
-    size = int_shape[1] * int_shape[2] * int_shape[3]
-    if K.image_data_format() == 'channels_first':
-        features = K.reshape(x, shape=(-1,
-                                       int_shape[1],
-                                       int_shape[2] * int_shape[3]))
-    else:
-        features = K.permute_dimensions(x, (0, 3, 1, 2))
-        features = K.reshape(features, shape=(-1,
-                                              int_shape[3],
-                                              int_shape[1] * int_shape[2]))
+    height = int_shape[1]
+    width = int_shape[2]
+    channel = int_shape[3]
+    size = height * width * channel
+    features = K.permute_dimensions(x, (0, 3, 1, 2))
+    features = K.reshape(features, shape=(-1,
+                                          channel,
+                                          height * width))
     # print(features.shape)
     # print(K.permute_dimensions(features, (0, 2, 1)).shape)
     gram = K.batch_dot(features, K.permute_dimensions(features, (0, 2, 1))) / size / 2
@@ -76,7 +74,7 @@ def total_variation_loss(x):
             x[:, :height - 1, :width - 1, :] - x[:, 1:, :width - 1, :])
         b = K.square(
             x[:, :height - 1, :width - 1, :] - x[:, :height - 1, 1:, :])
-    loss = tv_weight * K.sum(K.sqrt(a + b), axis=[1, 2, 3])
+    loss = tv_weight * K.sum(K.pow(a + b, 1.25), axis=[1, 2, 3])
     loss = K.reshape(loss, shape=(-1, 1))
     # print(loss.shape)
     return loss

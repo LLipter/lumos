@@ -94,8 +94,7 @@ def transform_test_image(epoch, logs):
     plt.savefig(save_path)
     plt.close()
 
-    if os.path.exists(model_path):
-        trans_model.save_weights(model_path)
+    trans_model.save_weights(model_path)
 
 
 if __name__ == "__main__":
@@ -108,7 +107,7 @@ if __name__ == "__main__":
     graph = tf.get_default_graph()
 
     overall_model.summary()
-    opt = Adam(lr=learning_rate)
+    opt = Adam(lr=learning_rate, clipvalue=0.5)
     overall_model.compile(optimizer=opt, loss=lambda y_true, y_pred: y_pred)
     predict_callback = LambdaCallback(on_epoch_end=transform_test_image)
 

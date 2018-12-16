@@ -1,5 +1,5 @@
 from keras import backend as K
-from keras.layers import Input, Conv2D, Add, Conv2DTranspose, Activation, Lambda, Reshape, UpSampling2D
+from keras.layers import Input, Conv2D, Add, Conv2DTranspose, Activation, Lambda, Reshape, UpSampling2D, ZeroPadding2D, Cropping2D
 from keras.models import Model
 from keras.utils import plot_model
 from keras.applications import vgg16
@@ -21,20 +21,21 @@ def down_sampling(x, filters, kernel_size, strides, padding="same", activation="
 
 
 def residul(x):
+    cropped = Cropping2D(2)(x)
     conv1 = Conv2D(filters=64,
                    kernel_size=3,
                    strides=1,
-                   padding="same",
+                   padding="valid",
                    activation=None)(x)
     instance_normalized1 = InstanceNormalization(axis=3)(conv1)
     relu = Activation("relu")(instance_normalized1)
     conv2 = Conv2D(filters=64,
                    kernel_size=3,
                    strides=1,
-                   padding="same",
+                   padding="valid",
                    activation=None)(relu)
     instance_normalized2 = InstanceNormalization(axis=3)(conv2)
-    return Add()([instance_normalized2, x])
+    return Add()([instance_normalized2, cropped])
 
 
 def up_sampling(x, filters, kernel_size, strides, padding="same", activation="relu"):
@@ -52,8 +53,9 @@ def up_sampling(x, filters, kernel_size, strides, padding="same", activation="re
 
 def transform_net():
     input_tensor = Input(shape=(img_nrows, img_ncols, 3))
+    padding = ZeroPadding2D(40)(input_tensor)
 
-    conv1 = down_sampling(input_tensor, 16, 9, 1)
+    conv1 = down_sampling(padding, 16, 9, 1)
     conv2 = down_sampling(conv1, 32, 3, 2)
     conv3 = down_sampling(conv2, 64, 3, 2)
 
@@ -69,7 +71,7 @@ def transform_net():
                      kernel_size=9,
                      strides=1,
                      padding="same",
-                     activation=None)(deconv2)
+                     activation="tanh")(deconv2)
 
     # I don't know why but it works...
     output = Lambda(lambda x: x * 150)(deconv3)
