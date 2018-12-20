@@ -2,6 +2,7 @@ import torch
 
 
 class TransformerNet(torch.nn.Module):
+
     def __init__(self):
         super(TransformerNet, self).__init__()
         # Initial convolution layers
