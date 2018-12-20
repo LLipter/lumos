@@ -125,8 +125,9 @@ def stylize(content_image, has_cuda, model, outputimg):
         transforms.ToTensor(),
         transforms.Lambda(lambda x: x.mul(255))
     ])
-    content_image = content_transform(content_image)
-    content_image = content_image.unsqueeze(0).to(device)
+    for i in range(len(content_image)):
+        content_image[i] = content_transform(content_image[i])
+        content_image[i] = content_image[i].unsqueeze(0).to(device)
     with torch.no_grad():
             style_model = TransformerNet()
             state_dict = torch.load(model)
@@ -136,8 +137,9 @@ def stylize(content_image, has_cuda, model, outputimg):
                     del state_dict[k]
             style_model.load_state_dict(state_dict)
             style_model.to(device)
-            output = style_model(content_image).cpu()
-            utils.save_image(outputimg, output[0])
+            for j in range(len(content_image)):
+                output = style_model(content_image[j]).cpu()
+                utils.save_image(outputimg[j], output[0])
 
 
 def stylize_onnx_caffe2(content_image, args):
@@ -160,11 +162,17 @@ def stylize_onnx_caffe2(content_image, args):
 
 
 def main():
-    content_image = utils.load_image("/Users/anneyino/Desktop/models/img02.jpg")
+    content_image01 = utils.load_image("/Users/anneyino/Desktop/models/img01.jpg")
+    content_image02 = utils.load_image("/Users/anneyino/Desktop/models/img02.jpg")
+    content_image03 = utils.load_image("/Users/anneyino/Desktop/models/img01.jpg")
+    contentArray = [content_image01, content_image02, content_image03]
     hascuda = 0
     model = "/Users/anneyino/Desktop/models/candy.pth"
-    outputImage = "/Users/anneyino/Desktop/transformedImg3.jpg"
-    stylize(content_image, hascuda, model, outputImage)
+    outputImage01 = "/Users/anneyino/Desktop/transformedImg3.jpg"
+    outputImage02 = "/Users/anneyino/Desktop/transformedImg4.jpg"
+    outputImage03 = "/Users/anneyino/Desktop/transformedImg5.jpg"
+    outputArray = [outputImage01, outputImage02, outputImage03]
+    stylize(contentArray, hascuda, model, outputArray)
 
 
 if __name__ == "__main__":
