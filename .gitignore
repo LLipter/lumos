@@ -4,3 +4,4 @@ img/train/*
 img/style/feature/*
 img/test/transformed/*
 model/*
+style_transform/model/*
