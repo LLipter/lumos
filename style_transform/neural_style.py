@@ -160,12 +160,11 @@ def stylize_onnx_caffe2(content_image, args):
 
 
 def main():
-
-        content_image = utils.load_image("/Users/anneyino/Desktop/models/img02.jpg")
-        hascuda = 0
-        model = "/Users/anneyino/Desktop/models/candy.pth"
-        outputImage = "/Users/anneyino/Desktop/transformedImg3.jpg"
-        stylize(content_image, hascuda, model, outputImage)
+    content_image = utils.load_image("/Users/anneyino/Desktop/models/img02.jpg")
+    hascuda = 0
+    model = "/Users/anneyino/Desktop/models/candy.pth"
+    outputImage = "/Users/anneyino/Desktop/transformedImg3.jpg"
+    stylize(content_image, hascuda, model, outputImage)
 
 
 if __name__ == "__main__":

@@ -4,3 +4,6 @@ img/train/*
 img/style/feature/*
 img/test/transformed/*
 model/*
+keras/__pycache__/*
+style_transform/__pycache__/*
+style_transform/model/*
