@@ -3,7 +3,7 @@ project(ffmpeg C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(ffmpeg main.c)
+add_executable(ffmpeg main.c io.c io.h)
 
 #include_directories(/Library/Frameworks/Python.framework/Versions/3.6/include/python3.6m)
 #link_directories(/Library/Frameworks/Python.framework/Versions/3.6/lib)
