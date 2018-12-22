@@ -37,18 +37,18 @@ int main(int argc, char **argv) {
     //2、打开视频文件
     pFormatCtx = avformat_alloc_context();
     if ((avformat_open_input(&pFormatCtx, input_path, NULL, NULL)) < 0)
-        cleanup("Cannot open input file");
+        cleanup("Error in opening input file");
 
     //3、获取视频信息
     if (avformat_find_stream_info(pFormatCtx, NULL) < 0)
-        cleanup("Cannot find stream");
+        cleanup("Error in finding stream");
 
     //4、找到视频流的位置
     video_stream_index = av_find_best_stream(pFormatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, &pCodec, 0);
     if (video_stream_index == AVERROR_STREAM_NOT_FOUND)
-        cleanup("Cannot find stream index");
+        cleanup("Error in finding stream index");
     else if (video_stream_index == AVERROR_DECODER_NOT_FOUND)
-        cleanup("Cannot find decoder");
+        cleanup("Error in finding decoder");
 
     //5、获取AVCodecParameters
     pCodePara = pFormatCtx->streams[video_stream_index]->codecpar;
@@ -59,14 +59,37 @@ int main(int argc, char **argv) {
     codec_ctx = avcodec_alloc_context3(pCodec);
     avcodec_parameters_to_context(codec_ctx, pCodePara);
     if (avcodec_open2(codec_ctx, pCodec, NULL) < 0)
-        cleanup("Cannot open codec");
+        cleanup("Error in opening codec");
 
     //7、解析每一帧数据
     int got_picture_ptr, frame_count = 1;
-    //压缩数据
     packet = av_packet_alloc();
-    //解压缩数据
     frame = av_frame_alloc();
+
+    // read all frames and send them into decoder
+    int cnt = 1;
+    while (av_read_frame(pFormatCtx, packet) >= 0) {
+        printf("%d\n", cnt++);
+        if (packet->stream_index == video_stream_index) {
+            if (avcodec_send_packet(codec_ctx, packet) < 0)
+                cleanup("Error in sending a packet for decoding");
+            while (ret = avcodec_receive_frame(codec_ctx, frame) > 0) {
+                // do something
+            }
+            if (ret == AVERROR(EAGAIN))
+                continue;
+            else if (ret < 0)
+                cleanup("Error in receiving a packet from decoder");
+        }
+    }
+    // send flush packet, enter draining mode.
+    avcodec_send_packet(NULL, NULL);
+    while (ret = avcodec_receive_frame(codec_ctx, frame) > 0) {
+        // do something
+    }
+    if (ret != AVERROR_EOF)
+        cleanup("Error in draining decoder stream");
+    return 0;
 
     //一帧一帧读取压缩的视频数据
     while (av_read_frame(pFormatCtx, packet) >= 0) {
