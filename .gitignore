@@ -7,3 +7,6 @@ model/*
 keras/__pycache__/*
 style_transform/__pycache__/*
 style_transform/model/*
+
+video/.idea/*
+video/cmake-build-debug/*
