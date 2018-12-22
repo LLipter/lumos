@@ -28,13 +28,11 @@ AVCodecContext *codec_ctx = NULL;
 AVCodecParameters *pCodePara = NULL;
 AVPacket *packet = NULL;
 AVFrame *frame = NULL;
-struct SwsContext *sws_ctx = NULL;
-AVFrame *yuvFrame = NULL;
-uint8_t *out_buffer = NULL;
+AVCodec *jpegCodec = NULL;
+AVCodecContext *jpegContext = NULL;
+AVPacket *jpeg_packet = NULL;
 
 int remove_directory(const char *path);
-void pgm_save(unsigned char *buf, int wrap, char *filename);
-
 
 void cleanup(char *msg) {
     if (pFormatCtx)
@@ -45,10 +43,10 @@ void cleanup(char *msg) {
         av_packet_unref(packet);
     if (frame)
         av_frame_free(&frame);
-    if (yuvFrame)
-        av_frame_free(&yuvFrame);
-    if (out_buffer)
-        av_free(out_buffer);
+    if (jpegContext)
+        avcodec_close(jpegContext);
+    if (jpeg_packet)
+        av_packet_unref(jpeg_packet);
     if (msg) {
         perror(msg);
         exit(1);
@@ -56,20 +54,37 @@ void cleanup(char *msg) {
     remove_directory(save_path);
 }
 
+void save_frame_as_jpeg(AVFrame *pFrame, char *filename) {
+    FILE *JPEGFile;
+    if (avcodec_send_frame(jpegContext, pFrame) < 0)
+        cleanup("Error in sending frame");
+    if (avcodec_send_frame(jpegContext, NULL) < 0)
+        cleanup("Error in sending frame");
+    if (avcodec_receive_packet(jpegContext, jpeg_packet) < 0)
+        cleanup("Error in receiving packet");
+
+    JPEGFile = fopen(filename, "wb");
+    fwrite(jpeg_packet->data, 1, jpeg_packet->size, JPEGFile);
+    fclose(JPEGFile);
+
+
+}
+
 int extract_frame(AVFrame *frame) {
     if (frame->pict_type == AV_PICTURE_TYPE_I) {
-        snprintf(buf, BUFF_SIZE, "%s/%s-%d.yuv", save_path, filename, codec_ctx->frame_number);
-//        pgm_save(frame->data[0], frame->linesize[0], buf);
-        FILE* fp_yuv = fopen(buf, "w");
-        //frame->yuvFrame，转为指定的YUV420P像素帧
-        sws_scale(sws_ctx, (const uint8_t *const *) frame->data, frame->linesize, 0,
-                  frame->height, yuvFrame->data, yuvFrame->linesize);
-        //计算视频数据总大小
-        int y_size = width * height;
-        //AVFrame->YUV，由于YUV的比例是4:1:1
-        fwrite(yuvFrame->data[0], 1, y_size, fp_yuv);
-        fwrite(yuvFrame->data[1], 1, y_size / 4, fp_yuv);
-        fwrite(yuvFrame->data[2], 1, y_size / 4, fp_yuv);
+        snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, codec_ctx->frame_number);
+////        pgm_save(frame->data[0], frame->linesize[0], buf);
+        save_frame_as_jpeg(frame, buf);
+//        FILE* fp_yuv = fopen(buf, "w");
+//        //frame->yuvFrame，转为指定的YUV420P像素帧
+//        sws_scale(sws_ctx, (const uint8_t *const *) frame->data, frame->linesize, 0,
+//                  frame->height, yuvFrame->data, yuvFrame->linesize);
+//        //计算视频数据总大小
+//        int y_size = width * height;
+//        //AVFrame->YUV，由于YUV的比例是4:1:1
+//        fwrite(yuvFrame->data[0], 1, y_size, fp_yuv);
+//        fwrite(yuvFrame->data[1], 1, y_size / 4, fp_yuv);
+//        fwrite(yuvFrame->data[2], 1, y_size / 4, fp_yuv);
 
     }
     return 0;
@@ -116,23 +131,24 @@ int main(int argc, char **argv) {
     if (avcodec_open2(codec_ctx, pCodec, NULL) < 0)
         cleanup("Error in opening codec");
 
-    // change format
-    yuvFrame = av_frame_alloc();
-    sws_ctx = sws_getContext(
-            width,
-            height,
-            codec_ctx->pix_fmt,
-            width,
-            height,
-            AV_PIX_FMT_YUV420P, SWS_BILINEAR, NULL, NULL, NULL);
-    out_buffer = (uint8_t *) av_malloc(av_image_get_buffer_size(AV_PIX_FMT_YUV420P, width, height, 1));
-    av_image_fill_arrays(yuvFrame->data, yuvFrame->linesize, out_buffer, AV_PIX_FMT_YUV420P, width, height, 1);
-
+    // define jpeg context and encoder
+    jpegCodec = avcodec_find_encoder(AV_CODEC_ID_JPEG2000);
+    if (!jpegCodec)
+        cleanup("Error in finding jpeg decoder");
+    jpegContext = avcodec_alloc_context3(jpegCodec);
+    if (!jpegContext)
+        cleanup("Error in create jpeg context");
+    jpegContext->pix_fmt = codec_ctx->pix_fmt;
+    jpegContext->height = height;
+    jpegContext->width = width;
+    jpegContext->time_base = codec_ctx->time_base;
+    if (avcodec_open2(jpegContext, jpegCodec, NULL) < 0)
+        cleanup("Error in opening jpeg decoder");
+    jpeg_packet = av_packet_alloc();
 
     //7、解析每一帧数据
     packet = av_packet_alloc();
     frame = av_frame_alloc();
-
     // read all frames and send them into decoder
     int cnt = 1;
     while (av_read_frame(pFormatCtx, packet) >= 0) {
@@ -202,15 +218,4 @@ int remove_directory(const char *path) {
         r = rmdir(path);
 
     return r;
-}
-
-
-void pgm_save(unsigned char *buf, int wrap, char *filename) {
-    FILE *f;
-    int i;
-    f = fopen(filename, "w");
-    fprintf(f, "P5\n%d %d\n%d\n", width, height, 255);
-    for (i = 0; i < height; i++)
-        fwrite(buf + i * wrap, 1, width, f);
-    fclose(f);
 }
