@@ -1,5 +1,3 @@
-#include <Python.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,8 +5,17 @@
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 
+#include <dirent.h>
+#include <sys/stat.h>
+#include <zconf.h>
 
-char *input_path = "../video/01.mp4";
+#define BUFF_SIZE 1024
+
+char *input_dir = "../video/%s";
+char *filename = "01.mp4";
+char *save_dir = "../video/tmp/%s";
+char save_path[BUFF_SIZE];
+char input_path[BUFF_SIZE];
 int width = 0;
 int height = 0;
 int ret = 0;
@@ -19,6 +26,8 @@ AVCodecContext *codec_ctx = NULL;
 AVCodecParameters *pCodePara = NULL;
 AVPacket *packet = NULL;
 AVFrame *frame = NULL;
+
+int remove_directory(const char *path);
 
 
 void cleanup(char *msg) {
@@ -34,6 +43,7 @@ void cleanup(char *msg) {
         perror(msg);
         exit(1);
     }
+    remove_directory(save_path);
 }
 
 int extract_frame(AVFrame *frame) {
@@ -55,7 +65,21 @@ int extract_frame(AVFrame *frame) {
     return 0;
 }
 
+void init() {
+    if (snprintf(input_path, BUFF_SIZE, input_dir, filename) < 0)
+        cleanup("Error in snprintf");
+    if (snprintf(save_path, BUFF_SIZE, save_dir, filename) < 0)
+        cleanup("Error in snprintf");
+//    if (mkdir(save_path, 0777) < 0)
+//        cleanup("Error in mkdir");
+}
+
 int main(int argc, char **argv) {
+
+    init();
+    cleanup(NULL);
+    return 0;
+
     //2、打开视频文件
     pFormatCtx = avformat_alloc_context();
     if ((avformat_open_input(&pFormatCtx, input_path, NULL, NULL)) < 0)
@@ -112,4 +136,51 @@ int main(int argc, char **argv) {
 
     cleanup(NULL);
     return 0;
+}
+
+
+int remove_directory(const char *path) {
+    DIR *d = opendir(path);
+    size_t path_len = strlen(path);
+    int r = -1;
+
+    if (d) {
+        struct dirent *p;
+
+        r = 0;
+
+        while (!r && (p = readdir(d))) {
+            int r2 = -1;
+            char *buf;
+            size_t len;
+
+            /* Skip the names "." and ".." as we don't want to recurse on them. */
+            if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, "..")) {
+                continue;
+            }
+
+            len = path_len + strlen(p->d_name) + 2;
+            buf = malloc(len);
+
+            if (buf) {
+                struct stat statbuf;
+                snprintf(buf, len, "%s/%s", path, p->d_name);
+                if (!stat(buf, &statbuf)) {
+                    if (S_ISDIR(statbuf.st_mode)) {
+                        r2 = remove_directory(buf);
+                    } else {
+                        r2 = unlink(buf);
+                    }
+                }
+                free(buf);
+            }
+            r = r2;
+        }
+        closedir(d);
+    }
+
+    if (!r)
+        r = rmdir(path);
+
+    return r;
 }
