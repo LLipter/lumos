@@ -110,49 +110,6 @@ int main(int argc, char **argv) {
     if (ret != AVERROR_EOF)
         cleanup("Error in draining decoder stream");
 
-    /*
-
-//            if ((frame->pict_type == AV_PICTURE_TYPE_I) || (frame->pict_type == AV_PICTURE_TYPE_P)) {
-//                printf("this is i PICTURE\n");
-//                //正在解码
-//                if (got_picture_ptr) {
-//                    //frame->yuvFrame，转为指定的YUV420P像素帧
-//                    sws_scale(sws_ctx, (const uint8_t *const *) frame->data, frame->linesize, 0,
-//                              frame->height, yuvFrame->data, yuvFrame->linesize);
-//                    //计算视频数据总大小
-//                    int y_size = pCodeCtx->width * pCodeCtx->height;
-//                    //AVFrame->YUV，由于YUV的比例是4:1:1
-//                    fwrite(yuvFrame->data[0], 1, y_size, fp_yuv);
-//                    fwrite(yuvFrame->data[1], 1, y_size / 4, fp_yuv);
-//                    fwrite(yuvFrame->data[2], 1, y_size / 4, fp_yuv);
-//                }
-//            }
-
-            //提取b帧
-
-            if(frame->pict_type == AV_PICTURE_TYPE_B)
-            {
-                //正在解码
-                if (got_picture_ptr)
-                {
-                    //frame->yuvFrame，转为指定的YUV420P像素帧
-                    sws_scale(sws_ctx, (const uint8_t *const *) frame->data, frame->linesize, 0,
-                              frame->height, yuvFrame->data, yuvFrame->linesize);
-                    //计算视频数据总大小
-                    int y_size = pCodeCtx->width * pCodeCtx->height;
-                    //AVFrame->YUV，由于YUV的比例是4:1:1
-                    fwrite(yuvFrame->data[0], 1, y_size, fp_yuv);
-                    fwrite(yuvFrame->data[1], 1, y_size / 4, fp_yuv);
-                    fwrite(yuvFrame->data[2], 1, y_size / 4, fp_yuv);
-                }
-            }
-
-
-        }
-    }
-    */
-
-
     cleanup(NULL);
     return 0;
 }
