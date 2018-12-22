@@ -10,14 +10,11 @@ AVFormatContext *pFormatCtx = NULL;
 int video_stream_index = -1;
 AVCodecParameters *pCodePara = NULL;
 AVCodec *pCodec = NULL;
-AVCodecContext *codec_ctx = NULL;
 
 
 void cleanup(char* msg){
     if(pFormatCtx)
         avformat_free_context(pFormatCtx);
-    if(codec_ctx)
-        avcodec_free_context(codec_ctx);
     if(msg){
         perror(msg);
         exit(1);
@@ -54,8 +51,6 @@ int main(int argc, char **argv) {
         cleanup("Cannot find decoder");
 
     //6、打开解码器
-//    codec_ctx = avcodec_alloc_context3(pCodec);
-//    avcodec_parameters_to_context(codec_ctx, pCodePara);
     if (avcodec_open2(pCodePara, pCodec, NULL) < 0)
         cleanup("Cannot open codec");
 
