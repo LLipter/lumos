@@ -13,8 +13,9 @@
 
 #define BUFF_SIZE 1024
 
-char *input_dir = "../video/%s";
-char *filename = "01.mp4";
+char *cmd = "split";
+char *input_dir = "../video";
+char *filename = "02.mp4";
 char save_path[BUFF_SIZE];
 char input_path[BUFF_SIZE];
 char buf[BUFF_SIZE];
@@ -45,18 +46,16 @@ void save_frame_as_jpeg(AVFrame *pFrame, char *filename);
 
 
 void init() {
-    if (snprintf(input_path, BUFF_SIZE, input_dir, filename) < 0)
+    if (snprintf(input_path, BUFF_SIZE, "%s/%s", input_dir, filename) < 0)
         cleanup("Error in snprintf");
     if (snprintf(save_path, BUFF_SIZE, "%s-IFrame", input_path) < 0)
         cleanup("Error in snprintf");
+}
+
+void split(){
     remove_directory(save_path);
     if (mkdir(save_path, 0777) < 0)
         cleanup("Error in mkdir");
-}
-
-int main(int argc, char **argv) {
-
-    init();
 
     //2、打开视频文件
     pFormatCtx = avformat_alloc_context();
@@ -111,6 +110,25 @@ int main(int argc, char **argv) {
         cleanup("Error in draining decoder stream");
 
     cleanup(NULL);
+}
+
+int main(int argc, char **argv) {
+
+
+    if (argc <= 3) {
+        fprintf(stderr, "Usage: %s <command> <dirpath> <filename>\n", argv[0]);
+        exit(0);
+    }
+    cmd = argv[1];
+    input_dir = argv[2];
+    filename = argv[3];
+
+    init();
+
+    if (strcmp(cmd, "split") == 0)
+        split();
+    else
+        //merge();
     return 0;
 }
 
@@ -172,7 +190,6 @@ void cleanup(char *msg) {
         perror(msg);
         exit(1);
     }
-    remove_directory(save_path);
 }
 
 void save_frame_as_jpeg(AVFrame *pFrame, char *filename) {
