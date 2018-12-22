@@ -10,5 +10,6 @@
 #include <string.h>
 
 int remove_directory(const char *path);
+unsigned long get_file_size(const char *path);
 
 #endif //FFMPEG_IO_H

@@ -27,19 +27,22 @@ AVCodecContext *codec_ctx = NULL;
 AVCodecParameters *pCodePara = NULL;
 AVPacket *packet = NULL;
 AVFrame *frame = NULL;
-AVCodec *jpegCodec = NULL;
-AVCodecContext *jpegContext = NULL;
-AVPacket *jpeg_packet = NULL;
 
 
-void init();
-
-void cleanup(char *msg);
-
-void extract_frame(AVFrame *frame);
-
-void save_frame_as_jpeg(AVFrame *pFrame, char *filename);
-
+void cleanup(char *msg) {
+    if (pFormatCtx)
+        avformat_close_input(&pFormatCtx);
+    if (codec_ctx)
+        avcodec_free_context(&codec_ctx);
+    if (packet)
+        av_packet_unref(packet);
+    if (frame)
+        av_frame_free(&frame);
+    if (msg) {
+        perror(msg);
+        exit(1);
+    }
+}
 
 void init() {
     if (snprintf(input_path, BUFF_SIZE, "%s/%s", input_dir, filename) < 0)
@@ -48,10 +51,104 @@ void init() {
         cleanup("Error in snprintf");
 }
 
-void split(){
-    remove_directory(save_path);
-    if (mkdir(save_path, 0777) < 0)
-        cleanup("Error in mkdir");
+void save_frame_as_jpeg(AVFrame *pFrame, char *filename) {
+    AVCodec *jpegCodec = avcodec_find_encoder(AV_CODEC_ID_JPEG2000);
+    if (!jpegCodec)
+        cleanup("Error in finding jpeg decoder");
+    AVCodecContext *jpegContext = avcodec_alloc_context3(jpegCodec);
+    if (!jpegContext)
+        cleanup("Error in create jpeg context");
+    jpegContext->pix_fmt = codec_ctx->pix_fmt;
+    jpegContext->height = height;
+    jpegContext->width = width;
+    jpegContext->time_base = codec_ctx->time_base;
+    if (avcodec_open2(jpegContext, jpegCodec, NULL) < 0)
+        cleanup("Error in opening jpeg decoder");
+    AVPacket *jpeg_packet = av_packet_alloc();
+
+    if (avcodec_send_frame(jpegContext, pFrame) < 0)
+        cleanup("Error in sending frame");
+    if (avcodec_send_frame(jpegContext, NULL) < 0)
+        cleanup("Error in sending frame");
+    if (avcodec_receive_packet(jpegContext, jpeg_packet) < 0)
+        cleanup("Error in receiving packet");
+
+    FILE *JPEGFile = fopen(filename, "wb");
+    fwrite(jpeg_packet->data, 1, jpeg_packet->size, JPEGFile);
+    fclose(JPEGFile);
+
+    avcodec_close(jpegContext);
+    av_packet_unref(jpeg_packet);
+}
+
+void load_jpeg_as_frame(AVFrame *pFrame, char *filename) {
+//    AVCodec *jpegCodec = avcodec_find_encoder(AV_CODEC_ID_JPEG2000);
+//    if (!jpegCodec)
+//        cleanup("Error in finding jpeg decoder");
+//    AVCodecContext *jpegContext = avcodec_alloc_context3(jpegCodec);
+//    if (!jpegContext)
+//        cleanup("Error in create jpeg context");
+//    jpegContext->pix_fmt = codec_ctx->pix_fmt;
+//    jpegContext->height = height;
+//    jpegContext->width = width;
+//    jpegContext->time_base = codec_ctx->time_base;
+//    if (avcodec_open2(jpegContext, jpegCodec, NULL) < 0)
+//        cleanup("Error in opening jpeg decoder");
+//
+//
+//    int size = get_file_size(filename);
+//    AVPacket *jpeg_packet = av_packet_alloc();
+//    if (av_new_packet(jpeg_packet, size) < 0)
+//        cleanup("Error in allocating packet");
+//
+//    FILE *JPEGFile = fopen(filename, "rb");
+//    fread(jpeg_packet->data, 1, jpeg_packet->size, JPEGFile);
+//    fclose(JPEGFile);
+//    printf("!11");
+//    if (avcodec_send_packet(jpegContext, jpeg_packet) < 0)
+//        cleanup("Error in sending packet");
+//    printf("!12");
+//    if (avcodec_send_packet(jpegContext, NULL) < 0)
+//        cleanup("Error in sending packet");
+//    printf("!13");
+//    if (avcodec_receive_packet(codec_ctx, pFrame) < 0)
+//        cleanup("Error in receiving frame");
+//
+//    av_packet_unref(jpeg_packet);
+}
+
+void extract_frame(AVFrame *frame) {
+    if (frame->pict_type == AV_PICTURE_TYPE_I) {
+        snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, codec_ctx->frame_number);
+        if (strcmp(cmd, "split") == 0)
+            save_frame_as_jpeg(frame, buf);
+        else
+            load_jpeg_as_frame(frame, buf);
+    }
+
+    if (strcmp(cmd, "split") != 0) {
+
+    }
+}
+
+
+int main(int argc, char **argv) {
+    if (argc <= 3) {
+        fprintf(stderr, "Usage: %s <command> <dirpath> <filename>\n", argv[0]);
+        exit(0);
+    }
+    cmd = argv[1];
+    input_dir = argv[2];
+    filename = argv[3];
+
+    init();
+
+    if (strcmp(cmd, "split") == 0) {
+        // remove old data
+        remove_directory(save_path);
+        if (mkdir(save_path, 0777) < 0)
+            cleanup("Error in mkdir");
+    }
 
     //2、打开视频文件
     pFormatCtx = avformat_alloc_context();
@@ -108,77 +205,4 @@ void split(){
     cleanup(NULL);
 }
 
-int main(int argc, char **argv) {
 
-
-    if (argc <= 3) {
-        fprintf(stderr, "Usage: %s <command> <dirpath> <filename>\n", argv[0]);
-        exit(0);
-    }
-    cmd = argv[1];
-    input_dir = argv[2];
-    filename = argv[3];
-
-    init();
-
-    if (strcmp(cmd, "split") == 0)
-        split();
-    else
-        //merge();
-    return 0;
-}
-
-
-
-void cleanup(char *msg) {
-    if (pFormatCtx)
-        avformat_close_input(&pFormatCtx);
-    if (codec_ctx)
-        avcodec_free_context(&codec_ctx);
-    if (packet)
-        av_packet_unref(packet);
-    if (frame)
-        av_frame_free(&frame);
-    if (msg) {
-        perror(msg);
-        exit(1);
-    }
-}
-
-void save_frame_as_jpeg(AVFrame *pFrame, char *filename) {
-    jpegCodec = avcodec_find_encoder(AV_CODEC_ID_JPEG2000);
-    if (!jpegCodec)
-        cleanup("Error in finding jpeg decoder");
-    jpegContext = avcodec_alloc_context3(jpegCodec);
-    if (!jpegContext)
-        cleanup("Error in create jpeg context");
-    jpegContext->pix_fmt = codec_ctx->pix_fmt;
-    jpegContext->height = height;
-    jpegContext->width = width;
-    jpegContext->time_base = codec_ctx->time_base;
-    if (avcodec_open2(jpegContext, jpegCodec, NULL) < 0)
-        cleanup("Error in opening jpeg decoder");
-    jpeg_packet = av_packet_alloc();
-
-    FILE *JPEGFile;
-    if (avcodec_send_frame(jpegContext, pFrame) < 0)
-        cleanup("Error in sending frame");
-    if (avcodec_send_frame(jpegContext, NULL) < 0)
-        cleanup("Error in sending frame");
-    if (avcodec_receive_packet(jpegContext, jpeg_packet) < 0)
-        cleanup("Error in receiving packet");
-
-    JPEGFile = fopen(filename, "wb");
-    fwrite(jpeg_packet->data, 1, jpeg_packet->size, JPEGFile);
-    fclose(JPEGFile);
-
-    avcodec_close(jpegContext);
-    av_packet_unref(jpeg_packet);
-}
-
-void extract_frame(AVFrame *frame) {
-    if (frame->pict_type == AV_PICTURE_TYPE_I) {
-        snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, codec_ctx->frame_number);
-        save_frame_as_jpeg(frame, buf);
-    }
-}
