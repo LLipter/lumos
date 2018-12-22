@@ -5,7 +5,9 @@ set(CMAKE_C_STANDARD 99)
 
 add_executable(ffmpeg main.c)
 
-#link_directories(/usr/local/lib)
+include_directories(/Library/Frameworks/Python.framework/Versions/3.6/include/python3.6m)
+link_directories(/Library/Frameworks/Python.framework/Versions/3.6/lib)
+
 target_link_libraries(ffmpeg avcodec)
 target_link_libraries(ffmpeg avdevice)
 target_link_libraries(ffmpeg avfilter)
@@ -19,6 +21,8 @@ target_link_libraries(ffmpeg libz.dylib)
 target_link_libraries(ffmpeg libbz2.1.0.dylib)
 target_link_libraries(ffmpeg iconv)
 target_link_libraries(ffmpeg lzma)
+
+target_link_libraries(ffmpeg python3.6m)
 
 target_link_libraries(ffmpeg
         "-framework CoreFoundation"
