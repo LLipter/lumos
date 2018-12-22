@@ -16,6 +16,7 @@ char *filename = "01.mp4";
 char *save_dir = "../video/tmp/%s";
 char save_path[BUFF_SIZE];
 char input_path[BUFF_SIZE];
+char buf[BUFF_SIZE];
 int width = 0;
 int height = 0;
 int ret = 0;
@@ -28,6 +29,7 @@ AVPacket *packet = NULL;
 AVFrame *frame = NULL;
 
 int remove_directory(const char *path);
+void pgm_save(unsigned char *buf, int wrap, char *filename);
 
 
 void cleanup(char *msg) {
@@ -47,9 +49,7 @@ void cleanup(char *msg) {
 }
 
 int extract_frame(AVFrame *frame) {
-    if ((frame->pict_type == AV_PICTURE_TYPE_I) || (frame->pict_type == AV_PICTURE_TYPE_P)) {
-        printf("this is i PICTURE\n");
-        //正在解码
+    if (frame->pict_type == AV_PICTURE_TYPE_I) {
 //        if (got_picture_ptr) {
 //            //frame->yuvFrame，转为指定的YUV420P像素帧
 //            sws_scale(sws_ctx, (const uint8_t *const *) frame->data, frame->linesize, 0,
@@ -70,15 +70,13 @@ void init() {
         cleanup("Error in snprintf");
     if (snprintf(save_path, BUFF_SIZE, save_dir, filename) < 0)
         cleanup("Error in snprintf");
-//    if (mkdir(save_path, 0777) < 0)
-//        cleanup("Error in mkdir");
+    if (mkdir(save_path, 0777) < 0)
+        cleanup("Error in mkdir");
 }
 
 int main(int argc, char **argv) {
 
     init();
-    cleanup(NULL);
-    return 0;
 
     //2、打开视频文件
     pFormatCtx = avformat_alloc_context();
@@ -119,7 +117,7 @@ int main(int argc, char **argv) {
         if (packet->stream_index == video_stream_index) {
             if (avcodec_send_packet(codec_ctx, packet) < 0)
                 cleanup("Error in sending a packet for decoding");
-            while ((ret = avcodec_receive_frame(codec_ctx, frame)) > 0)
+            while ((ret = avcodec_receive_frame(codec_ctx, frame)) >= 0)
                 extract_frame(frame);
             if (ret == AVERROR(EAGAIN))
                 continue;
@@ -129,7 +127,7 @@ int main(int argc, char **argv) {
     }
     // send flush packet, enter draining mode.
     avcodec_send_packet(NULL, NULL);
-    while ((ret = avcodec_receive_frame(codec_ctx, frame)) > 0)
+    while ((ret = avcodec_receive_frame(codec_ctx, frame)) >= 0)
         extract_frame(frame);
     if (ret != AVERROR_EOF)
         cleanup("Error in draining decoder stream");
@@ -146,9 +144,7 @@ int remove_directory(const char *path) {
 
     if (d) {
         struct dirent *p;
-
         r = 0;
-
         while (!r && (p = readdir(d))) {
             int r2 = -1;
             char *buf;
@@ -183,4 +179,15 @@ int remove_directory(const char *path) {
         r = rmdir(path);
 
     return r;
+}
+
+
+void pgm_save(unsigned char *buf, int wrap, char *filename) {
+    FILE *f;
+    int i;
+    f = fopen(filename, "w");
+    fprintf(f, "P5\n%d %d\n%d\n", width, height, 255);
+    for (i = 0; i < height; i++)
+        fwrite(buf + i * wrap, 1, width, f);
+    fclose(f);
 }
