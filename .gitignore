@@ -10,3 +10,4 @@ style_transform/model/*
 
 ffmpeg/.idea/*
 ffmpeg/cmake-build-debug/*
+ffmpeg/video

@@ -16,6 +16,7 @@ target_link_libraries(ffmpeg swresample)
 target_link_libraries(ffmpeg swscale)
 
 target_link_libraries(ffmpeg libz.dylib)
+target_link_libraries(ffmpeg libbz2.1.0.dylib)
 target_link_libraries(ffmpeg iconv)
 target_link_libraries(ffmpeg lzma)
 
@@ -25,4 +26,5 @@ target_link_libraries(ffmpeg
         "-framework CoreMedia"
         "-framework CoreVideo"
         "-framework VideoToolbox"
+        "-framework Security"
         )
