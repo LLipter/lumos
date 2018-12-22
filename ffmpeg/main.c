@@ -33,6 +33,24 @@ void cleanup(char *msg) {
     }
 }
 
+int extract_frame(AVFrame *frame) {
+    if ((frame->pict_type == AV_PICTURE_TYPE_I) || (frame->pict_type == AV_PICTURE_TYPE_P)) {
+        printf("this is i PICTURE\n");
+        //正在解码
+        if (got_picture_ptr) {
+            //frame->yuvFrame，转为指定的YUV420P像素帧
+            sws_scale(sws_ctx, (const uint8_t *const *) frame->data, frame->linesize, 0,
+                      frame->height, yuvFrame->data, yuvFrame->linesize);
+            //计算视频数据总大小
+            int y_size = pCodeCtx->width * pCodeCtx->height;
+            //AVFrame->YUV，由于YUV的比例是4:1:1
+            fwrite(yuvFrame->data[0], 1, y_size, fp_yuv);
+            fwrite(yuvFrame->data[1], 1, y_size / 4, fp_yuv);
+            fwrite(yuvFrame->data[2], 1, y_size / 4, fp_yuv);
+        }
+    }
+}
+
 int main(int argc, char **argv) {
     //2、打开视频文件
     pFormatCtx = avformat_alloc_context();
@@ -73,9 +91,8 @@ int main(int argc, char **argv) {
         if (packet->stream_index == video_stream_index) {
             if (avcodec_send_packet(codec_ctx, packet) < 0)
                 cleanup("Error in sending a packet for decoding");
-            while (ret = avcodec_receive_frame(codec_ctx, frame) > 0) {
-                // do something
-            }
+            while (ret = avcodec_receive_frame(codec_ctx, frame) > 0)
+                extract_frame(frame);
             if (ret == AVERROR(EAGAIN))
                 continue;
             else if (ret < 0)
@@ -84,29 +101,13 @@ int main(int argc, char **argv) {
     }
     // send flush packet, enter draining mode.
     avcodec_send_packet(NULL, NULL);
-    while (ret = avcodec_receive_frame(codec_ctx, frame) > 0) {
-        // do something
-    }
+    while (ret = avcodec_receive_frame(codec_ctx, frame) > 0)
+        extract_frame(frame);
     if (ret != AVERROR_EOF)
         cleanup("Error in draining decoder stream");
-    return 0;
 
-    //一帧一帧读取压缩的视频数据
-    while (av_read_frame(pFormatCtx, packet) >= 0) {
-        //找到视频流
-        if (packet->stream_index == video_stream_index) {
-            if (avcodec_send_packet(codec_ctx, packet) < 0)
-                cleanup("Cannot sending a packet for decoding");
-            ret = avcodec_receive_frame(codec_ctx, frame);
-            if (ret == AVERROR(EINVAL))
-                cleanup("0 receiving a frame from decoder");
-            if (ret == AVERROR(EAGAIN))
-                cleanup("1 receiving a frame from decoder");
-            else if (ret == AVERROR_EOF)
-                cleanup("2 receiving a frame from decoder");
-            else
-                cleanup("3 receiving a frame from decoder");
-            //提取p帧，和i帧
+    /*
+
 //            if ((frame->pict_type == AV_PICTURE_TYPE_I) || (frame->pict_type == AV_PICTURE_TYPE_P)) {
 //                printf("this is i PICTURE\n");
 //                //正在解码
@@ -124,7 +125,7 @@ int main(int argc, char **argv) {
 //            }
 
             //提取b帧
-            /*
+
             if(frame->pict_type == AV_PICTURE_TYPE_B)
             {
                 //正在解码
@@ -141,10 +142,11 @@ int main(int argc, char **argv) {
                     fwrite(yuvFrame->data[2], 1, y_size / 4, fp_yuv);
                 }
             }
-            */
+
 
         }
     }
+    */
 
 
     cleanup(NULL);
