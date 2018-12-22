@@ -6,44 +6,39 @@
 #include <libavformat/avformat.h>
 
 char* input_path = "../video/01.mp4";
+AVFormatContext *pFormatCtx = NULL;
+int video_stream_index = -1;
 
-void cleanup(){
-
+void cleanup(char* msg){
+    if(pFormatCtx){
+        avformat_free_context(pFormatCtx);
+        avformat_close_input(&pFormatCtx);
+    }
+    perror(msg);
+    exit(1);
 }
 
 int main(int argc, char **argv) {
     //2、打开视频文件
-    AVFormatContext *pFormatCtx = avformat_alloc_context();
+    pFormatCtx = avformat_alloc_context();
     if ((avformat_open_input(&pFormatCtx, input_path, NULL, NULL)) < 0)
-    {
-        perror("Cannot open input file");
-        exit(1);
-    }
+        cleanup("Cannot open input file");
 
     //3、获取视频信息
     if (avformat_find_stream_info(pFormatCtx, NULL) < 0)
-    {
-        perror("Cannot find stream");
-        if(pFormatCtx)
-            avformat_free_context(pFormatCtx);
-        avformat_close_input(&pFormatCtx);
-        exit(2);
-    }
+        cleanup("Cannot find stream");
 
     //4、找到视频流的位置
-    int video_stream_index = -1;
-    int i = 0;
-    for (; i < pFormatCtx->nb_streams; i++) {
-        if (pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+    for (int i; i < pFormatCtx->nb_streams; i++) {
+        if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
         {
             video_stream_index = i;
             break;
         }
     }
-    if (video_stream_index == -1){
-        perror("Cannot find stream index");
-        exit(1);
-    }
+    if (video_stream_index == -1)
+        cleanup("Cannot find stream index");
+
 
 
     return 0;
