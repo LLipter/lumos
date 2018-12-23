@@ -1,9 +1,13 @@
 .idea/*
 __pycache__/*
-img/train/*
-img/style/feature/*
-img/test/transformed/*
-model/*
+keras/img/train/*
+keras/img/style/feature/*
+keras/img/test/transformed/*
+keras/model/*
 keras/__pycache__/*
 style_transform/__pycache__/*
 style_transform/model/*
+
+ffmpeg/.idea/*
+ffmpeg/cmake-build-debug/*
+ffmpeg/video/*
