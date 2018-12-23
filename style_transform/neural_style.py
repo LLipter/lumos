@@ -1,11 +1,12 @@
-import argparse
 import os
 import sys
 import time
 import re
+import cv2
 
 import numpy as np
 import torch
+from PIL import Image
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision import datasets
@@ -16,6 +17,46 @@ import utils
 from transformer_net import TransformerNet
 from vgg import Vgg16
 
+def video2imgs(videoname, outputvideo):
+    fourcc = cv2.VideoWriter_fourcc(*'MP42')
+    img_list = []
+    transform_list = []
+    cap = cv2.VideoCapture(videoname)
+    width = cap.get(3)
+    height = cap.get(4)
+    intwidth = int(width)
+    intheight = int(height)
+    print(width)
+    print(height)
+    Vwriter = cv2.VideoWriter(outputvideo, fourcc, 25, (intwidth, intheight), True)
+    counter = 0
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if ret and counter < 25:
+            counter = counter + 1
+            img_list.append(frame)
+            print("frame added", counter)
+        else:
+            break
+    modelsrc = "/Users/anneyino/Desktop/models/candy.pth"        
+    transform_list = stylize(img_list, 0, modelsrc)
+    cap.release()
+    print("style transfromed")
+    for transimg in transform_list:
+        img = transimg.clone().clamp(0, 255).numpy()
+        img = img.transpose(1, 2, 0).astype("uint8")
+        img = Image.fromarray(img)
+        img = np.array(img)
+        img = img[..., [2, 1, 0]]
+        Vwriter.write(img)
+
+
+
+def imgs2video(videoname, imglist):
+    fourcc = cv2.VideoWriter_fourcc(*'MP42')
+    Vwriter = cv2.VideoWriter(videoname, fourcc, 25, (1000, 912), True)
+    for img in imglist:
+        Vwriter.write(img)
 
 def check_paths(args):
     try:
@@ -119,7 +160,8 @@ def train(args):
     print("\nDone, trained model saved at", save_model_path)
 
 
-def stylize(content_image, has_cuda, model, outputimg):
+def stylize(content_image, has_cuda, model):
+    img_list = []
     device = torch.device("cuda" if has_cuda else "cpu")
     content_transform = transforms.Compose([
         transforms.ToTensor(),
@@ -139,8 +181,10 @@ def stylize(content_image, has_cuda, model, outputimg):
             style_model.to(device)
             for j in range(len(content_image)):
                 output = style_model(content_image[j]).cpu()
-                utils.save_image(outputimg[j], output[0])
-
+                img_list.append(output[0])
+                print("transformed")
+                #utils.save_image(outputimg[j], output[0])
+    return img_list
 
 def stylize_onnx_caffe2(content_image, args):
     """
@@ -162,17 +206,35 @@ def stylize_onnx_caffe2(content_image, args):
 
 
 def main():
-    content_image01 = utils.load_image("/Users/anneyino/Desktop/models/img01.jpg")
-    content_image02 = utils.load_image("/Users/anneyino/Desktop/models/img02.jpg")
-    content_image03 = utils.load_image("/Users/anneyino/Desktop/models/img01.jpg")
-    contentArray = [content_image01, content_image02, content_image03]
-    hascuda = 0
-    model = "/Users/anneyino/Desktop/models/candy.pth"
-    outputImage01 = "/Users/anneyino/Desktop/transformedImg3.jpg"
-    outputImage02 = "/Users/anneyino/Desktop/transformedImg4.jpg"
-    outputImage03 = "/Users/anneyino/Desktop/transformedImg5.jpg"
-    outputArray = [outputImage01, outputImage02, outputImage03]
-    stylize(contentArray, hascuda, model, outputArray)
+    img01 = utils.load_image("/Users/anneyino/Desktop/models/img01.jpg")
+    #img01 = img01.resize((2160,1080))
+    img02 = cv2.imread("/Users/anneyino/Desktop/models/img01.jpg")
+    print(img02[4])
+    img01 = np.array(img01)
+    #print(img01[2])
+    img03 = img01[...,[2, 1, 0]]
+    print(img03[4])
+
+    print(img02.shape)
+    print(img03.shape)
+
+    #img02 = cv2.resize(img02,(2160,1080),interpolation=cv2.INTER_NEAREST)
+    cv2.imwrite("/Users/anneyino/Desktop/testimage.jpg",img03,[int(cv2.IMWRITE_JPEG_QUALITY), 100])
+    vdname = "/Users/anneyino/Desktop/models/testvideo.mp4"
+    outputname = "/Users/anneyino/Desktop/test.mp4"
+    #imagelist = video2imgs(vdname)
+    img_list = []
+    #cap = cv2.VideoCapture(vdname)
+    counter = 0
+    #while cap.isOpened():
+        #ret, frame = cap.read()
+        #if ret and counter < 50:
+            #counter = counter + 1
+            #img_list.append(frame)
+        #else:
+            #break
+    #cap.release()
+    video2imgs(vdname, outputname)
 
 
 if __name__ == "__main__":
