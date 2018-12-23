@@ -21,6 +21,7 @@ int width = 0;
 int height = 0;
 int ret = 0;
 int video_stream_index = -1;
+int frame_cnt = 1;
 AVFormatContext *pFormatCtx = NULL;
 AVCodec *pCodec = NULL;
 AVCodecContext *codec_ctx = NULL;
@@ -68,8 +69,6 @@ void save_frame_as_jpeg(AVFrame *pFrame, char *filename) {
 
     if (avcodec_send_frame(jpegContext, pFrame) < 0)
         cleanup("Error in sending frame");
-    if (avcodec_send_frame(jpegContext, NULL) < 0)
-        cleanup("Error in sending frame");
     if (avcodec_receive_packet(jpegContext, jpeg_packet) < 0)
         cleanup("Error in receiving packet");
 
@@ -82,7 +81,18 @@ void save_frame_as_jpeg(AVFrame *pFrame, char *filename) {
 }
 
 void load_jpeg_as_frame(AVFrame *pFrame, char *filename) {
-//    AVCodec *jpegCodec = avcodec_find_encoder(AV_CODEC_ID_JPEG2000);
+
+
+    /*
+     *
+     *
+     * 这他妈有bug，我找了半天也没找到
+     * 这里需要做的就是把磁盘上的图片重新加载进内存，还原成一个frame，把原来pFrame里面的内容替换掉
+     */
+
+
+
+//    AVCodec *jpegCodec = avcodec_find_decoder(AV_CODEC_ID_JPEG2000);
 //    if (!jpegCodec)
 //        cleanup("Error in finding jpeg decoder");
 //    AVCodecContext *jpegContext = avcodec_alloc_context3(jpegCodec);
@@ -91,43 +101,56 @@ void load_jpeg_as_frame(AVFrame *pFrame, char *filename) {
 //    jpegContext->pix_fmt = codec_ctx->pix_fmt;
 //    jpegContext->height = height;
 //    jpegContext->width = width;
-//    jpegContext->time_base = codec_ctx->time_base;
 //    if (avcodec_open2(jpegContext, jpegCodec, NULL) < 0)
 //        cleanup("Error in opening jpeg decoder");
 //
-//
 //    int size = get_file_size(filename);
+//    printf("size %d\n", size);
 //    AVPacket *jpeg_packet = av_packet_alloc();
 //    if (av_new_packet(jpeg_packet, size) < 0)
 //        cleanup("Error in allocating packet");
 //
 //    FILE *JPEGFile = fopen(filename, "rb");
-//    fread(jpeg_packet->data, 1, jpeg_packet->size, JPEGFile);
+//    int n = fread(jpeg_packet->data, 1, jpeg_packet->size, JPEGFile);
+//    if (n != size)
+//        cleanup("Error in reading jpeg file");
 //    fclose(JPEGFile);
-//    printf("!11");
+//
+//    printf("!11\n");
 //    if (avcodec_send_packet(jpegContext, jpeg_packet) < 0)
 //        cleanup("Error in sending packet");
-//    printf("!12");
-//    if (avcodec_send_packet(jpegContext, NULL) < 0)
-//        cleanup("Error in sending packet");
-//    printf("!13");
-//    if (avcodec_receive_packet(codec_ctx, pFrame) < 0)
+//    printf("!13\n");
+//    if (avcodec_receive_frame(jpegContext, pFrame) < 0)
 //        cleanup("Error in receiving frame");
+//    printf("!14\n");
 //
+//    avcodec_close(jpegContext);
 //    av_packet_unref(jpeg_packet);
 }
 
 void extract_frame(AVFrame *frame) {
+    printf("%d\n", frame_cnt);
     if (frame->pict_type == AV_PICTURE_TYPE_I) {
-        snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, codec_ctx->frame_number);
+        snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, frame_cnt);
         if (strcmp(cmd, "split") == 0)
             save_frame_as_jpeg(frame, buf);
         else
             load_jpeg_as_frame(frame, buf);
     }
+    frame_cnt++;
 
     if (strcmp(cmd, "split") != 0) {
 
+
+        /*
+         *
+         * 这他妈也是要写但还没写的。
+         * 在第二轮融合的时候，我们需要把每一帧重新写入输出文件中，
+         * https://stackoverflow.com/questions/40800489/ffmpeg-read-frame-process-it-put-it-to-output-video-copy-sound-stream-unchan
+         * 参考这个文章
+         *
+         * 我不干了
+         */
     }
 }
 
@@ -181,9 +204,8 @@ int main(int argc, char **argv) {
     packet = av_packet_alloc();
     frame = av_frame_alloc();
     // read all frames and send them into decoder
-    int cnt = 1;
+
     while (av_read_frame(pFormatCtx, packet) >= 0) {
-        printf("%d\n", cnt++);
         if (packet->stream_index == video_stream_index) {
             if (avcodec_send_packet(codec_ctx, packet) < 0)
                 cleanup("Error in sending a packet for decoding");
