@@ -119,7 +119,6 @@ void load_jpeg_as_frame(AVFrame *pFrame, char *filename) {
         cleanup("Error in opening jpeg decoder");
 
     int size = get_file_size(filename);
-    printf("size %d\n", size);
     AVPacket *jpeg_packet = av_packet_alloc();
     if (av_new_packet(jpeg_packet, size) < 0)
         cleanup("Error in allocating packet");
@@ -130,13 +129,10 @@ void load_jpeg_as_frame(AVFrame *pFrame, char *filename) {
         cleanup("Error in reading jpeg file");
     fclose(JPEGFile);
 
-    printf("!11\n");
     if (avcodec_send_packet(jpegContext, jpeg_packet) < 0)
         cleanup("Error in sending packet");
-    printf("!13\n");
     if (avcodec_receive_frame(jpegContext, pFrame) < 0)
         cleanup("Error in receiving frame");
-    printf("!14\n");
 
     avcodec_close(jpegContext);
     av_packet_unref(jpeg_packet);
@@ -156,7 +152,23 @@ void split_process_frame(AVFrame *frame) {
 
 int merge_process_frame(AVFrame *frame){
 
+    // 2. is input_frame.type == I_FRAME goto 4
+    if(frame->pict_type == AV_PICTURE_TYPE_I){
+        snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, frame_cnt);
+        load_jpeg_as_frame(frame,buf);
 
+    }
+    // 3. throw input_video_packet to av_interleaved_write_frame
+    // 4. read jpeg file from disk into a jpeg_packet
+    // *** need to create a new jpeg codec
+    // 5. decode jpeg_packet into new_input_frame
+    // *** need to create a new video codec, mustn't use defined o_codec_ctx
+    // 6. encode new_input_frame into output_video_packet
+    // 7. throw output_video_packet into output_stream
+
+
+
+    av_packet_unref(packet);
 
 
 }
@@ -328,27 +340,6 @@ int merge() {
                 continue;
             else if (ret < 0)
                 cleanup("Error in receiving a packet from decoder");
-
-
-
-
-            // 2. is input_frame.type == I_FRAME goto 4
-            if(frame->pict_type == AV_PICTURE_TYPE_I){
-                snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, frame_cnt);
-                load_jpeg_as_frame(frame,buf);
-
-            }
-            // 3. throw input_video_packet to av_interleaved_write_frame
-            // 4. read jpeg file from disk into a jpeg_packet
-            // *** need to create a new jpeg codec
-            // 5. decode jpeg_packet into new_input_frame
-            // *** need to create a new video codec, mustn't use defined o_codec_ctx
-            // 6. encode new_input_frame into output_video_packet
-            // 7. throw output_video_packet into output_stream
-
-
-
-            av_packet_unref(packet);
         } else {
             if (av_interleaved_write_frame(ofmt_ctx, packet) < 0)
                 cleanup("error in writing other stream");
