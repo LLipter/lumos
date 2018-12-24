@@ -142,7 +142,7 @@ void load_jpeg_as_frame(AVFrame *pFrame, char *filename) {
 //    av_packet_unref(jpeg_packet);
 }
 
-void extract_frame(AVFrame *frame) {
+void split_process_frame(AVFrame *frame) {
     printf("%d\n", frame_cnt);
     if (frame->pict_type == AV_PICTURE_TYPE_I) {
         snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, frame_cnt);
@@ -150,6 +150,14 @@ void extract_frame(AVFrame *frame) {
 
     }
     frame_cnt++;
+
+}
+
+
+int merge_process_frame(AVFrame *frame){
+
+
+
 
 }
 
@@ -197,7 +205,7 @@ int split() {
             if (avcodec_send_packet(i_codec_ctx, p_packet) < 0)
                 cleanup("Error in sending a packet for decoding");
             while ((ret = avcodec_receive_frame(i_codec_ctx, frame)) >= 0)
-                extract_frame(frame);
+                split_process_frame(frame);
             if (ret == AVERROR(EAGAIN))
                 continue;
             else if (ret < 0)
@@ -207,7 +215,7 @@ int split() {
     // send flush packet, enter draining mode.
     avcodec_send_packet(i_codec_ctx, NULL);
     while ((ret = avcodec_receive_frame(i_codec_ctx, frame)) >= 0)
-        extract_frame(frame);
+        split_process_frame(frame);
     if (ret != AVERROR_EOF)
         cleanup("Error in draining decoder stream");
 
@@ -291,7 +299,6 @@ int merge() {
         cleanup("Error in opening codec");
 
 
-
     frame = av_frame_alloc();
     while (1) {
         AVPacket packet;
@@ -312,6 +319,15 @@ int merge() {
 
         if (packet.stream_index == i_video_stream_index) {
             // 1. input_video_packet -> input_frame
+            if (avcodec_send_packet(i_codec_ctx, &packet) < 0)
+                cleanup("error in phase 1");
+            while(avcodec_receive_frame(i_codec_ctx, frame) >=0){
+                merge_process_frame(frame);
+            }
+
+
+
+
             // 2. is input_frame.type == I_FRAME goto 4
             // 3. throw input_video_packet to av_interleaved_write_frame
             // 4. read jpeg file from disk into a jpeg_packet
@@ -331,8 +347,15 @@ int merge() {
 
     }
 
+    if (avcodec_send_packet(i_codec_ctx, NULL) < 0)
+        cleanup("error enter drain mode");
+    while(avcodec_receive_frame(i_codec_ctx, frame) >=0){
+        merge_process_frame(frame);
+    }
 
-    if(av_interleaved_write_frame(ofmt_ctx, NULL) < 0)
+
+
+    if (av_interleaved_write_frame(ofmt_ctx, NULL) < 0)
         cleanup("error in flush");
 
     if ((av_write_trailer(ofmt_ctx) < 0))
