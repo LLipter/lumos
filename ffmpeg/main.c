@@ -153,6 +153,7 @@ void split_process_frame(AVFrame *frame) {
 int merge_process_frame(AVFrame *frame){
 
     // 2. is input_frame.type == I_FRAME goto 4
+    printf("%d\n", frame_cnt);
     if(frame->pict_type == AV_PICTURE_TYPE_I){
         snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, frame_cnt);
         load_jpeg_as_frame(frame,buf);
@@ -171,6 +172,9 @@ int merge_process_frame(AVFrame *frame){
     av_packet_unref(packet);
 
 
+
+
+    frame_cnt++;
 }
 
 int split() {
