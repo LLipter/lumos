@@ -97,7 +97,7 @@ void save_frame_as_jpeg(AVFrame *pFrame, char *filename) {
     av_packet_unref(jpeg_packet);
 }
 
-AVPacket *load_jpeg_as_packet(char *filename) {
+AVPacket *load_jpeg_as_packet(char *filename, AVPacket* original_packet) {
 
 
     /*
@@ -105,6 +105,12 @@ AVPacket *load_jpeg_as_packet(char *filename) {
      *
      * 这他妈有bug，我找了半天也没找到
      * 这里需要做的就是把磁盘上的图片重新加载进内存，还原成一个frame，把原来pFrame里面的内容替换掉
+     */
+
+    /*
+     *
+     *
+     * 改来改去还他妈的是这里有bug
      */
 
 
@@ -140,31 +146,20 @@ AVPacket *load_jpeg_as_packet(char *filename) {
     if (avcodec_receive_frame(jpegContext, jpeg_frame) < 0)
         cleanup("cannot receive jpeg packet");
 
-/*
+
     // create a video encoder
-    AVCodec* video_codec = NULL;
-    ret = av_find_best_stream(ofmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &video_codec, 0);
-    if (ret == AVERROR_STREAM_NOT_FOUND)
-        cleanup("Error in finding stream index");
-    else if (ret == AVERROR_DECODER_NOT_FOUND)
-        cleanup("Error in finding decoder");
+    AVCodec *video_codec = avcodec_find_encoder(ofmt_ctx->streams[o_video_stream_index]->codecpar->codec_id);
     AVCodecContext *video_codec_ctx = avcodec_alloc_context3(video_codec);
-    avcodec_parameters_to_context(video_codec_ctx, o_pCodePara);
+    video_codec_ctx->time_base = i_codec_ctx->time_base;
+    video_codec_ctx->pix_fmt = i_codec_ctx->pix_fmt;
+    video_codec_ctx->width = i_codec_ctx->width;
+    video_codec_ctx->height = i_codec_ctx->height;
     if (avcodec_open2(video_codec_ctx, video_codec, NULL) < 0)
-        cleanup("Error in opening codec");
+        cleanup("Error in openingsss codec");
 
     // 6. encode new_input_frame into output_video_packet
-//    if (avcodec_send_frame(video_codec_ctx, jpeg_frame) < 0)
-//        cleanup("Error in sending jpeg frame");
-    ret = avcodec_send_frame(video_codec_ctx, jpeg_frame);
-    if (ret == AVERROR(EAGAIN))
-        cleanup("sss");
-    else if (ret == AVERROR_EOF)
-        cleanup("xxx");
-    else if (AVERROR(EINVAL) == ret)
-        cleanup("xcdfdfgedf");
-    else if (ret == AVERROR(ENOMEM))
-        cleanup("s1234567");
+    if (avcodec_send_frame(video_codec_ctx, jpeg_frame) < 0)
+        cleanup("Error in sending jpeg frame");
     // enter drain mode
     if (avcodec_send_frame(video_codec_ctx, NULL) < 0)
         cleanup("Error in entering video encoding drain mode");
@@ -173,12 +168,22 @@ AVPacket *load_jpeg_as_packet(char *filename) {
         cleanup("cannot receive video packet");
 
 
+    // 7. throw output_video_packet into output_stream
+    video_packet->dts = original_packet->dts;
+    video_packet->pts = original_packet->pts;
+    video_packet->duration = original_packet->duration;
+    video_packet->size = original_packet->size;
+    video_packet->pos = original_packet->pos;
+    if (av_interleaved_write_frame(ofmt_ctx, video_packet) < 0)
+        cleanup("error in write packet");
+
     avcodec_close(jpegContext);
     avcodec_close(video_codec_ctx);
     av_frame_free(&jpeg_frame);
     av_packet_unref(video_packet);
-    */
-    return packet;
+    return video_packet;
+
+
 }
 
 void split_process_frame(AVFrame *frame) {
@@ -202,7 +207,7 @@ int merge_process_frame(AVFrame *frame) {
     printf("%d\n", frame_cnt);
     if (frame->pict_type == AV_PICTURE_TYPE_I) {
         snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, frame_cnt);
-        load_jpeg_as_packet(buf);
+        load_jpeg_as_packet(buf, original_packet);
     } else {
         // 3. throw input_video_packet to av_interleaved_write_frame
         if (av_interleaved_write_frame(ofmt_ctx, original_packet) < 0)
@@ -211,11 +216,8 @@ int merge_process_frame(AVFrame *frame) {
 
 
 
-    // *** need to create a new jpeg codec
 
-    // *** need to create a new video codec, mustn't use defined o_codec_ctx
 
-    // 7. throw output_video_packet into output_stream
 
 
 
