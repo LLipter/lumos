@@ -25,6 +25,8 @@ int push_packet(AVPacket *packet){
         return -1;
     int pos = (head_pos + cur_size) % full_size;
     packet_array[pos] = packet;
+    cur_size++;
+    return 0;
 }
 
 AVPacket * pop_packet(){
@@ -32,6 +34,7 @@ AVPacket * pop_packet(){
         return NULL;
     AVPacket * packet = packet_array[head_pos];
     head_pos = (head_pos + 1) % full_size;
+    cur_size--;
     return packet;
 }
 
