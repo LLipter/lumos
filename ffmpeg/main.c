@@ -135,13 +135,49 @@ AVPacket *load_jpeg_as_packet(char *filename) {
     // 4. read jpeg file from disk into a jpeg_packet
     if (avcodec_send_packet(jpegContext, jpeg_packet) < 0)
         cleanup("Error in sending packet");
-    AVFrame* jpeg_frame = av_frame_alloc();
+    AVFrame *jpeg_frame = av_frame_alloc();
     // 5. decode jpeg_packet into new_input_frame
     if (avcodec_receive_frame(jpegContext, jpeg_frame) < 0)
         cleanup("cannot receive jpeg packet");
 
+/*
+    // create a video encoder
+    AVCodec* video_codec = NULL;
+    ret = av_find_best_stream(ofmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &video_codec, 0);
+    if (ret == AVERROR_STREAM_NOT_FOUND)
+        cleanup("Error in finding stream index");
+    else if (ret == AVERROR_DECODER_NOT_FOUND)
+        cleanup("Error in finding decoder");
+    AVCodecContext *video_codec_ctx = avcodec_alloc_context3(video_codec);
+    avcodec_parameters_to_context(video_codec_ctx, o_pCodePara);
+    if (avcodec_open2(video_codec_ctx, video_codec, NULL) < 0)
+        cleanup("Error in opening codec");
+
+    // 6. encode new_input_frame into output_video_packet
+//    if (avcodec_send_frame(video_codec_ctx, jpeg_frame) < 0)
+//        cleanup("Error in sending jpeg frame");
+    ret = avcodec_send_frame(video_codec_ctx, jpeg_frame);
+    if (ret == AVERROR(EAGAIN))
+        cleanup("sss");
+    else if (ret == AVERROR_EOF)
+        cleanup("xxx");
+    else if (AVERROR(EINVAL) == ret)
+        cleanup("xcdfdfgedf");
+    else if (ret == AVERROR(ENOMEM))
+        cleanup("s1234567");
+    // enter drain mode
+    if (avcodec_send_frame(video_codec_ctx, NULL) < 0)
+        cleanup("Error in entering video encoding drain mode");
+    AVPacket *video_packet = av_packet_alloc();
+    if (avcodec_receive_packet(video_codec_ctx, video_packet) < 0)
+        cleanup("cannot receive video packet");
+
+
     avcodec_close(jpegContext);
+    avcodec_close(video_codec_ctx);
     av_frame_free(&jpeg_frame);
+    av_packet_unref(video_packet);
+    */
     return packet;
 }
 
@@ -178,7 +214,7 @@ int merge_process_frame(AVFrame *frame) {
     // *** need to create a new jpeg codec
 
     // *** need to create a new video codec, mustn't use defined o_codec_ctx
-    // 6. encode new_input_frame into output_video_packet
+
     // 7. throw output_video_packet into output_stream
 
 
