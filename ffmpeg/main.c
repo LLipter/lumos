@@ -151,15 +151,20 @@ void split_process_frame(AVFrame *frame) {
 
 
 int merge_process_frame(AVFrame *frame){
+    AVPacket* original_packet = pop_packet();
+    if(!original_packet)
+        cleanup("empty packet queue");
 
     // 2. is input_frame.type == I_FRAME goto 4
     printf("%d\n", frame_cnt);
     if(frame->pict_type == AV_PICTURE_TYPE_I){
         snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, frame_cnt);
         load_jpeg_as_frame(frame,buf);
-
+    }else{
+        // 3. throw input_video_packet to av_interleaved_write_frame
+        if (av_interleaved_write_frame(ofmt_ctx, original_packet) < 0)
+            cleanup("error in write frame");
     }
-    // 3. throw input_video_packet to av_interleaved_write_frame
     // 4. read jpeg file from disk into a jpeg_packet
     // *** need to create a new jpeg codec
     // 5. decode jpeg_packet into new_input_frame
@@ -338,6 +343,7 @@ int merge() {
             // 1. input_video_packet -> input_frame
             if (avcodec_send_packet(i_codec_ctx, packet) < 0)
                 cleanup("error in phase 1");
+            push_packet(packet);
             while ((ret = avcodec_receive_frame(i_codec_ctx, frame)) >= 0)
                 merge_process_frame(frame);
             if (ret == AVERROR(EAGAIN))

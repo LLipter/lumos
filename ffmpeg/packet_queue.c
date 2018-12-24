@@ -20,14 +20,14 @@ void packet_queue_free(){
     free(packet_array);
 }
 
-int push(AVPacket * packet){
+int push_packet(AVPacket *packet){
     if(cur_size == full_size)
         return -1;
     int pos = (head_pos + cur_size) % full_size;
     packet_array[pos] = packet;
 }
 
-AVPacket * pop(){
+AVPacket * pop_packet(){
     if(cur_size == 0)
         return NULL;
     AVPacket * packet = packet_array[head_pos];

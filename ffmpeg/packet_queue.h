@@ -9,7 +9,7 @@
 
 void packet_queue_alloc(int size);
 void packet_queue_free();
-int push(AVPacket * packet);
-AVPacket * pop();
+int push_packet(AVPacket *packet);
+AVPacket * pop_packet();
 
 #endif //FFMPEG_PACKET_QUEUE_H
