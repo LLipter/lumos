@@ -321,9 +321,12 @@ int merge() {
             // 1. input_video_packet -> input_frame
             if (avcodec_send_packet(i_codec_ctx, &packet) < 0)
                 cleanup("error in phase 1");
-            while(avcodec_receive_frame(i_codec_ctx, frame) >=0){
+            while ((ret = avcodec_receive_frame(i_codec_ctx, frame)) >= 0)
                 merge_process_frame(frame);
-            }
+            if (ret == AVERROR(EAGAIN))
+                continue;
+            else if (ret < 0)
+                cleanup("Error in receiving a packet from decoder");
 
 
 
@@ -349,11 +352,10 @@ int merge() {
 
     if (avcodec_send_packet(i_codec_ctx, NULL) < 0)
         cleanup("error enter drain mode");
-    while(avcodec_receive_frame(i_codec_ctx, frame) >=0){
+    while(avcodec_receive_frame(i_codec_ctx, frame) >=0)
         merge_process_frame(frame);
-    }
-
-
+    if (ret != AVERROR_EOF)
+        cleanup("Error in draining decoder stream");
 
     if (av_interleaved_write_frame(ofmt_ctx, NULL) < 0)
         cleanup("error in flush");
