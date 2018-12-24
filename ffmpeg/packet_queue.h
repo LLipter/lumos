@@ -7,8 +7,8 @@
 
 #include <libavcodec/avcodec.h>
 
-void queue_alloc(int size);
-void queue_free();
+void packet_queue_alloc(int size);
+void packet_queue_free();
 int push(AVPacket * packet);
 AVPacket * pop();
 

@@ -36,7 +36,6 @@ AVCodecParameters *o_pCodePara = NULL;
 AVPacket *packet = NULL;
 AVFrame *frame = NULL;
 AVOutputFormat *ofmt = NULL;
-int i;
 
 
 void cleanup(char *msg) {
@@ -239,7 +238,7 @@ int merge() {
     ofmt = ofmt_ctx->oformat;
 
     // Allocating output streams
-    for (i = 0; i < ifmt_ctx->nb_streams; i++) {
+    for (int i = 0; i < ifmt_ctx->nb_streams; i++) {
         AVStream *in_stream = ifmt_ctx->streams[i];
         AVStream *out_stream = avformat_new_stream(ofmt_ctx, in_stream->codec->codec);
         if (!out_stream) {
@@ -302,6 +301,7 @@ int merge() {
 
     frame = av_frame_alloc();
     packet = av_packet_alloc();
+    packet_queue_alloc(1000);
     while (1) {
         ret = av_read_frame(ifmt_ctx, packet);
         if (ret < 0)
@@ -362,6 +362,8 @@ int merge() {
         merge_process_frame(frame);
     if (ret != AVERROR_EOF)
         cleanup("Error in draining decoder stream");
+
+    packet_queue_free();
 
     if (av_interleaved_write_frame(ofmt_ctx, NULL) < 0)
         cleanup("error in flush");

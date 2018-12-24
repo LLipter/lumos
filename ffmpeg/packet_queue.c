@@ -9,14 +9,14 @@ int cur_size;
 int head_pos;
 AVPacket **packet_array;
 
-void queue_alloc(int size) {
+void packet_queue_alloc(int size) {
     full_size = size;
     cur_size = 0;
     head_pos = 0;
     packet_array = malloc(sizeof(AVPacket *) * size);
 }
 
-void queue_free(){
+void packet_queue_free(){
     free(packet_array);
 }
 
