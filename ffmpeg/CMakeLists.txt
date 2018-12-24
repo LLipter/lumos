@@ -6,9 +6,7 @@ set(CMAKE_C_STANDARD 99)
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib)
 
-add_executable(ffmpeg main.c io.c io.h)
-
-
+add_executable(ffmpeg main.c io.c io.h packet_queue.h packet_queue.c)
 
 target_link_libraries(ffmpeg avcodec)
 target_link_libraries(ffmpeg avdevice)

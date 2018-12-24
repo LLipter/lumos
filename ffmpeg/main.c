@@ -8,6 +8,7 @@
 #include <libavutil/imgutils.h>
 
 #include "io.h"
+#include "packet_queue.h"
 
 #define BUFF_SIZE 1024
 
