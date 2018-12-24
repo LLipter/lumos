@@ -163,6 +163,7 @@ AVPacket *load_jpeg_as_packet(char *filename, AVPacket *original_packet) {
     if (n != size)
         cleanup("Error in reading jpeg file");
     fclose(JPEGFile);
+    avcodec_close(video_codec_ctx);
 
     // 4. read jpeg file from disk into a jpeg_packet
     if (avcodec_send_packet(jpegContext, jpeg_packet) < 0)
@@ -191,7 +192,7 @@ AVPacket *load_jpeg_as_packet(char *filename, AVPacket *original_packet) {
 
 
 
-    avcodec_close(video_codec_ctx);
+
     av_frame_free(&jpeg_frame);
     return video_packet;
 
@@ -353,26 +354,21 @@ int merge() {
     avcodec_parameters_to_context(i_codec_ctx, i_pCodePara);
     if (avcodec_open2(i_codec_ctx, i_pCodec, NULL) < 0)
         cleanup("Error in opening codec");
-    printf("xxx\n");
     // output codec
     o_video_stream_index = av_find_best_stream(ofmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &o_pCodec, 0);
     if (o_video_stream_index == AVERROR_STREAM_NOT_FOUND)
         cleanup("Error in finding stream index");
     else if (o_video_stream_index == AVERROR_DECODER_NOT_FOUND)
         cleanup("Error in finding decoder");
-    printf("sdsdsdsd\n");
     o_pCodePara = ofmt_ctx->streams[o_video_stream_index]->codecpar;
 
     o_codec_ctx = avcodec_alloc_context3(o_pCodec);
     avcodec_parameters_to_context(o_codec_ctx, o_pCodePara);
     if (avcodec_open2(o_codec_ctx, o_pCodec, NULL) < 0)
         cleanup("Error in opening codec");
-    printf("xxsdasfeasdgfdgdg\n");
 
     frame = av_frame_alloc();
-    printf("123456dgdg\n");
     packet_queue_alloc(&pk_queue1, 1000);
-    printf("sss\n");
     while (1) {
         packet = av_packet_alloc();
         ret = av_read_frame(ifmt_ctx, packet);
