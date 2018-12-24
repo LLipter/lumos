@@ -32,7 +32,7 @@ AVCodecContext *i_codec_ctx = NULL;
 AVCodecContext *o_codec_ctx = NULL;
 AVCodecParameters *i_pCodePara = NULL;
 AVCodecParameters *o_pCodePara = NULL;
-AVPacket *p_packet = NULL;
+AVPacket *packet = NULL;
 AVFrame *frame = NULL;
 AVOutputFormat *ofmt = NULL;
 int i;
@@ -47,8 +47,8 @@ void cleanup(char *msg) {
         avcodec_free_context(&i_codec_ctx);
     if (o_codec_ctx)
         avcodec_free_context(&o_codec_ctx);
-    if (p_packet)
-        av_packet_unref(p_packet);
+    if (packet)
+        av_packet_unref(packet);
     if (frame)
         av_frame_free(&frame);
     if (msg) {
@@ -196,13 +196,13 @@ int split() {
         cleanup("Error in opening codec");
 
     //7、解析每一帧数据
-    p_packet = av_packet_alloc();
+    packet = av_packet_alloc();
     frame = av_frame_alloc();
     // read all frames and send them into decoder
 
-    while (av_read_frame(ifmt_ctx, p_packet) >= 0) {
-        if (p_packet->stream_index == i_video_stream_index) {
-            if (avcodec_send_packet(i_codec_ctx, p_packet) < 0)
+    while (av_read_frame(ifmt_ctx, packet) >= 0) {
+        if (packet->stream_index == i_video_stream_index) {
+            if (avcodec_send_packet(i_codec_ctx, packet) < 0)
                 cleanup("Error in sending a packet for decoding");
             while ((ret = avcodec_receive_frame(i_codec_ctx, frame)) >= 0)
                 split_process_frame(frame);
@@ -300,26 +300,26 @@ int merge() {
 
 
     frame = av_frame_alloc();
+    packet = av_packet_alloc();
     while (1) {
-        AVPacket packet;
-        ret = av_read_frame(ifmt_ctx, &packet);
+        ret = av_read_frame(ifmt_ctx, packet);
         if (ret < 0)
             break;
 
         AVStream *in_stream, *out_stream;
-        in_stream = ifmt_ctx->streams[packet.stream_index];
-        out_stream = ofmt_ctx->streams[packet.stream_index];
+        in_stream = ifmt_ctx->streams[packet->stream_index];
+        out_stream = ofmt_ctx->streams[packet->stream_index];
 
         // copy packet
-        packet.pts = av_rescale_q_rnd(packet.pts, in_stream->time_base, out_stream->time_base,
+        packet->pts = av_rescale_q_rnd(packet->pts, in_stream->time_base, out_stream->time_base,
                                       AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX);
-        packet.dts = av_rescale_q_rnd(packet.dts, in_stream->time_base, out_stream->time_base,
+        packet->dts = av_rescale_q_rnd(packet->dts, in_stream->time_base, out_stream->time_base,
                                       AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX);
-        packet.duration = av_rescale_q(packet.duration, in_stream->time_base, out_stream->time_base);
+        packet->duration = av_rescale_q(packet->duration, in_stream->time_base, out_stream->time_base);
 
-        if (packet.stream_index == i_video_stream_index) {
+        if (packet->stream_index == i_video_stream_index) {
             // 1. input_video_packet -> input_frame
-            if (avcodec_send_packet(i_codec_ctx, &packet) < 0)
+            if (avcodec_send_packet(i_codec_ctx, packet) < 0)
                 cleanup("error in phase 1");
             while ((ret = avcodec_receive_frame(i_codec_ctx, frame)) >= 0)
                 merge_process_frame(frame);
@@ -342,9 +342,9 @@ int merge() {
 
 
 
-            av_packet_unref(&packet);
+            av_packet_unref(packet);
         } else {
-            if (av_interleaved_write_frame(ofmt_ctx, &packet) < 0)
+            if (av_interleaved_write_frame(ofmt_ctx, packet) < 0)
                 cleanup("error in writing other stream");
         }
 
