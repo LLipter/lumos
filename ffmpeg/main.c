@@ -38,6 +38,8 @@ AVFrame *frame = NULL;
 AVOutputFormat *ofmt = NULL;
 AVCodec *video_codec = NULL;
 AVCodecContext *video_codec_ctx = NULL;
+Packet_Queue pk_queue1;
+Packet_Queue pk_queue2;
 
 void cleanup(char *msg) {
     if (ifmt_ctx)
@@ -209,7 +211,7 @@ void split_process_frame(AVFrame *frame) {
 
 
 int merge_process_frame(AVFrame *frame) {
-    AVPacket *original_packet = pop_packet();
+    AVPacket *original_packet = pop_packet(&pk_queue1);
     if (!original_packet)
         cleanup("empty packet queue");
 
@@ -351,24 +353,26 @@ int merge() {
     avcodec_parameters_to_context(i_codec_ctx, i_pCodePara);
     if (avcodec_open2(i_codec_ctx, i_pCodec, NULL) < 0)
         cleanup("Error in opening codec");
-
+    printf("xxx\n");
     // output codec
     o_video_stream_index = av_find_best_stream(ofmt_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &o_pCodec, 0);
     if (o_video_stream_index == AVERROR_STREAM_NOT_FOUND)
         cleanup("Error in finding stream index");
     else if (o_video_stream_index == AVERROR_DECODER_NOT_FOUND)
         cleanup("Error in finding decoder");
-
+    printf("sdsdsdsd\n");
     o_pCodePara = ofmt_ctx->streams[o_video_stream_index]->codecpar;
 
     o_codec_ctx = avcodec_alloc_context3(o_pCodec);
     avcodec_parameters_to_context(o_codec_ctx, o_pCodePara);
     if (avcodec_open2(o_codec_ctx, o_pCodec, NULL) < 0)
         cleanup("Error in opening codec");
-
+    printf("xxsdasfeasdgfdgdg\n");
 
     frame = av_frame_alloc();
-    packet_queue_alloc(1000);
+    printf("123456dgdg\n");
+    packet_queue_alloc(&pk_queue1, 1000);
+    printf("sss\n");
     while (1) {
         packet = av_packet_alloc();
         ret = av_read_frame(ifmt_ctx, packet);
@@ -391,7 +395,7 @@ int merge() {
             // 1. input_video_packet -> input_frame
             if (avcodec_send_packet(i_codec_ctx, packet) < 0)
                 cleanup("error in phase 1");
-            if (push_packet(packet) < 0)
+            if (push_packet(&pk_queue1, packet) < 0)
                 cleanup("cannot push into packet queue");
             while ((ret = avcodec_receive_frame(i_codec_ctx, frame)) >= 0)
                 merge_process_frame(frame);
@@ -414,7 +418,7 @@ int merge() {
     if (ret != AVERROR_EOF)
         cleanup("Error in draining decoder stream");
 
-    packet_queue_free();
+    packet_queue_free(&pk_queue1);
 
     if (av_interleaved_write_frame(ofmt_ctx, NULL) < 0)
         cleanup("error in flush");
