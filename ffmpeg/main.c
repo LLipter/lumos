@@ -302,6 +302,8 @@ int merge() {
 
     frame = av_frame_alloc();
     packet = av_packet_alloc();
+    int frameNo = 1;
+
     while (1) {
         ret = av_read_frame(ifmt_ctx, packet);
         if (ret < 0)
@@ -334,7 +336,7 @@ int merge() {
 
             // 2. is input_frame.type == I_FRAME goto 4
             if(frame->pict_type == AV_PICTURE_TYPE_I){
-                snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, frame_cnt);
+                snprintf(buf, BUFF_SIZE, "%s/%s-%d.jpg", save_path, filename, frameNo);
                 load_jpeg_as_frame(frame,buf);
 
             }
