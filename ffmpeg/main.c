@@ -97,7 +97,7 @@ void save_frame_as_jpeg(AVFrame *pFrame, char *filename) {
     av_packet_unref(jpeg_packet);
 }
 
-AVPacket *load_jpeg_as_packet(char *filename, AVPacket* original_packet) {
+AVPacket *load_jpeg_as_packet(char *filename, AVPacket *original_packet) {
 
 
     /*
@@ -149,11 +149,19 @@ AVPacket *load_jpeg_as_packet(char *filename, AVPacket* original_packet) {
 
     // create a video encoder
     AVCodec *video_codec = avcodec_find_encoder(ofmt_ctx->streams[o_video_stream_index]->codecpar->codec_id);
+    findenco
     AVCodecContext *video_codec_ctx = avcodec_alloc_context3(video_codec);
     video_codec_ctx->time_base = i_codec_ctx->time_base;
-    video_codec_ctx->pix_fmt = i_codec_ctx->pix_fmt;
-    video_codec_ctx->width = i_codec_ctx->width;
-    video_codec_ctx->height = i_codec_ctx->height;
+    video_codec_ctx->pix_fmt = o_codec_ctx->pix_fmt;
+    video_codec_ctx->width = o_codec_ctx->width;
+    video_codec_ctx->height = o_codec_ctx->height;
+    video_codec_ctx->color_range = o_codec_ctx->color_range;
+    video_codec_ctx->frame_number = o_codec_ctx->frame_number;
+    video_codec_ctx->framerate = o_codec_ctx->framerate;
+    video_codec_ctx->flags = o_codec_ctx->flags;
+    video_codec_ctx->ticks_per_frame = o_codec_ctx->ticks_per_frame;
+    video_codec_ctx->max_b_frames = o_codec_ctx->max_b_frames;
+
     if (avcodec_open2(video_codec_ctx, video_codec, NULL) < 0)
         cleanup("Error in openingsss codec");
 
@@ -174,13 +182,17 @@ AVPacket *load_jpeg_as_packet(char *filename, AVPacket* original_packet) {
     video_packet->duration = original_packet->duration;
     video_packet->size = original_packet->size;
     video_packet->pos = original_packet->pos;
+    video_packet->stream_index = original_packet->stream_index;
+    video_packet->flags = original_packet->flags;
+    video_packet->side_data_elems = original_packet->side_data_elems;
+    video_packet->side_data = original_packet->side_data;
     if (av_interleaved_write_frame(ofmt_ctx, video_packet) < 0)
         cleanup("error in write packet");
+
 
     avcodec_close(jpegContext);
     avcodec_close(video_codec_ctx);
     av_frame_free(&jpeg_frame);
-    av_packet_unref(video_packet);
     return video_packet;
 
 
@@ -213,12 +225,6 @@ int merge_process_frame(AVFrame *frame) {
         if (av_interleaved_write_frame(ofmt_ctx, original_packet) < 0)
             cleanup("error in write frame");
     }
-
-
-
-
-
-
 
 
     av_packet_unref(original_packet);
@@ -383,6 +389,7 @@ int merge() {
         packet->duration = av_rescale_q(packet->duration, in_stream->time_base, out_stream->time_base);
 
         if (packet->stream_index == i_video_stream_index) {
+            // video stream
             // 1. input_video_packet -> input_frame
             if (avcodec_send_packet(i_codec_ctx, packet) < 0)
                 cleanup("error in phase 1");
@@ -392,9 +399,10 @@ int merge() {
                 merge_process_frame(frame);
             if (ret == AVERROR(EAGAIN))
                 continue;
-            else if (ret < 0)
+            else
                 cleanup("Error in receiving a packet from decoder");
         } else {
+            // other stream
             if (av_interleaved_write_frame(ofmt_ctx, packet) < 0)
                 cleanup("error in writing other stream");
         }
