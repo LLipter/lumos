@@ -7,9 +7,19 @@
 
 #include <libavcodec/avcodec.h>
 
-void packet_queue_alloc(int size);
-void packet_queue_free();
-int push_packet(AVPacket *packet);
-AVPacket * pop_packet();
+typedef struct Packet_Queue{
+    int full_size;
+    int cur_size;
+    int head_pos;
+    AVPacket **packet_array;
+}Packet_Queue;
+
+void packet_queue_alloc(Packet_Queue *packet_queue, int size);
+
+void packet_queue_free(Packet_Queue *packet_queue);
+
+int push_packet(Packet_Queue *packet_queue, AVPacket *packet);
+
+AVPacket *pop_packet(Packet_Queue *packet_queue);
 
 #endif //FFMPEG_PACKET_QUEUE_H
