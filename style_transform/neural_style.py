@@ -32,12 +32,16 @@ def video2imgs(videoname, outputvideo):
     counter = 0
     while cap.isOpened():
         ret, frame = cap.read()
-        if ret and counter < 25:
+        if ret and counter >= 25 and counter <= 75:
             counter = counter + 1
             img_list.append(frame)
             print("frame added", counter)
+        elif ret and counter < 25:
+            counter = counter + 1
+            continue
         else:
             break
+    print("frame load complete")
     modelsrc = "/Users/anneyino/Desktop/models/candy.pth"        
     transform_list = stylize(img_list, 0, modelsrc)
     cap.release()
@@ -182,7 +186,7 @@ def stylize(content_image, has_cuda, model):
             for j in range(len(content_image)):
                 output = style_model(content_image[j]).cpu()
                 img_list.append(output[0])
-                print("transformed")
+                print("transformed",j)
                 #utils.save_image(outputimg[j], output[0])
     return img_list
 
@@ -206,35 +210,53 @@ def stylize_onnx_caffe2(content_image, args):
 
 
 def main():
-    img01 = utils.load_image("/Users/anneyino/Desktop/models/img01.jpg")
-    #img01 = img01.resize((2160,1080))
-    img02 = cv2.imread("/Users/anneyino/Desktop/models/img01.jpg")
-    print(img02[4])
-    img01 = np.array(img01)
-    #print(img01[2])
-    img03 = img01[...,[2, 1, 0]]
-    print(img03[4])
 
-    print(img02.shape)
-    print(img03.shape)
 
     #img02 = cv2.resize(img02,(2160,1080),interpolation=cv2.INTER_NEAREST)
-    cv2.imwrite("/Users/anneyino/Desktop/testimage.jpg",img03,[int(cv2.IMWRITE_JPEG_QUALITY), 100])
     vdname = "/Users/anneyino/Desktop/models/testvideo.mp4"
     outputname = "/Users/anneyino/Desktop/test.mp4"
-    #imagelist = video2imgs(vdname)
+
+    vdname_src1 = "/Users/anneyino/Desktop/output01.mp4"
+    vdname_src2 = "/Users/anneyino/Desktop/output02.mp4"
+    vdname_src3 = "/Users/anneyino/Desktop/output03.mp4"
+    outputvideo = "/Users/anneyino/Desktop/result.mp4"
     img_list = []
-    #cap = cv2.VideoCapture(vdname)
-    counter = 0
-    #while cap.isOpened():
-        #ret, frame = cap.read()
-        #if ret and counter < 50:
-            #counter = counter + 1
-            #img_list.append(frame)
-        #else:
-            #break
-    #cap.release()
-    video2imgs(vdname, outputname)
+    cap1 = cv2.VideoCapture(vdname_src1)
+    width = cap1.get(3)
+    height = cap1.get(4)
+    intwidth = int(width)
+    intheight = int(height)
+    fourcc = cv2.VideoWriter_fourcc(*'MP42')
+    while cap1.isOpened():
+        ret, frame = cap1.read()
+        if ret:
+            img_list.append(frame)
+        else:
+            break
+    cap1.release()
+
+    cap2 = cv2.VideoCapture(vdname_src2)
+    while cap2.isOpened():
+        ret, frame = cap2.read()
+        if ret:
+            img_list.append(frame)
+        else:
+            break
+    cap2.release()
+
+    cap3 = cv2.VideoCapture(vdname_src3)
+    while cap3.isOpened():
+        ret, frame = cap3.read()
+        if ret:
+            img_list.append(frame)
+        else:
+            break
+    cap3.release()
+
+    Vwriter = cv2.VideoWriter(outputvideo, fourcc, 25, (intwidth, intheight), True)
+    for singleframe in img_list:
+        Vwriter.write(singleframe)
+    #video2imgs(vdname, outputname)
 
 
 if __name__ == "__main__":
